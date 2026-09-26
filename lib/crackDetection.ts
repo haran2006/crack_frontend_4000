@@ -4,24 +4,25 @@ import { formatFileSize } from "@/lib/utils";
 const DEMO_MODEL_NAME = "YOLO Crack Segmentation (Demo Mode)";
 
 export async function detectCracks(files: File[]): Promise<DetectionRun> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  const endpoint = baseUrl
+    ? (baseUrl.endsWith("/detect") ? baseUrl : `${baseUrl.replace(/\/$/, "")}/detect`)
+    : "/api/detect";
 
-  if (apiUrl) {
-    try {
-      return await detectCracksRemote(files, apiUrl);
-    } catch (err) {
-      console.warn("Falling back to demo detection data:", err);
-    }
+  try {
+    return await detectCracksRemote(files, endpoint);
+  } catch (err) {
+    console.error("Remote detection failed:", err);
   }
 
   return detectCracksMock(files);
 }
 
-async function detectCracksRemote(files: File[], apiUrl: string): Promise<DetectionRun> {
+async function detectCracksRemote(files: File[], endpoint: string): Promise<DetectionRun> {
   const formData = new FormData();
   files.forEach((file) => formData.append("images", file));
 
-  const res = await fetch(`${apiUrl}/detect`, { method: "POST", body: formData });
+  const res = await fetch(endpoint, { method: "POST", body: formData });
   if (!res.ok) {
     const text = await res.text().catch(() => "(no body)");
     throw new Error(`Detection API responded with ${res.status}: ${text}`);
