@@ -45,6 +45,7 @@ export default function CrackDetection() {
       setStage("results");
     } catch (err: unknown) {
       console.error("Detection error:", err);
+      const msg = err instanceof Error ? err.message : String(err);
       const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
       setErrorMessage(
         msg.includes("Failed to fetch") || msg.includes("502")
