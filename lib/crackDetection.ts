@@ -9,13 +9,7 @@ export async function detectCracks(files: File[]): Promise<DetectionRun> {
     ? (baseUrl.endsWith("/detect") ? baseUrl : `${baseUrl.replace(/\/$/, "")}/detect`)
     : "/api/detect";
 
-  try {
-    return await detectCracksRemote(files, endpoint);
-  } catch (err) {
-    console.error("Remote detection failed:", err);
-  }
-
-  return detectCracksMock(files);
+  return await detectCracksRemote(files, endpoint);
 }
 
 async function detectCracksRemote(files: File[], endpoint: string): Promise<DetectionRun> {
