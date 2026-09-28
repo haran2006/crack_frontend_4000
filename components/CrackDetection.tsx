@@ -18,6 +18,7 @@ export default function CrackDetection() {
   const [stage, setStage] = useState<Stage>("idle");
   const [run, setRun] = useState<DetectionRun | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const seen = typeof window !== "undefined" && localStorage.getItem(GUIDE_SEEN_KEY);
@@ -32,19 +33,32 @@ export default function CrackDetection() {
   async function handleDetect() {
     if (files.length === 0) return;
     setStage("processing");
+    setErrorMessage(null);
 
-    const [detectionRun] = await Promise.all([
-      detectCracks(files),
-      new Promise((resolve) => setTimeout(resolve, MIN_PROCESSING_MS)),
-    ]);
+    try {
+      const [detectionRun] = await Promise.all([
+        detectCracks(files),
+        new Promise((resolve) => setTimeout(resolve, MIN_PROCESSING_MS)),
+      ]);
 
-    setRun(detectionRun);
-    setStage("results");
+      setRun(detectionRun);
+      setStage("results");
+    } catch (err: unknown) {
+      console.error("Detection error:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      setErrorMessage(
+        msg.includes("Failed to fetch") || msg.includes("502")
+          ? "Unable to connect to the backend server. Please verify that python api.py is running on port 8000."
+          : msg
+      );
+      setStage("idle");
+    }
   }
 
   function reset() {
     setFiles([]);
     setRun(null);
+    setErrorMessage(null);
     setStage("idle");
   }
 
@@ -55,6 +69,21 @@ export default function CrackDetection() {
         <p className="mt-2 text-ink-muted max-w-lg">
           Upload inspection images and let the vision model identify structural cracks.
         </p>
+
+        {errorMessage && (
+          <div className="mt-6 p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm flex items-start justify-between gap-3">
+            <div>
+              <p className="font-semibold text-red-300">Detection Request Failed</p>
+              <p className="mt-1 text-xs opacity-90">{errorMessage}</p>
+            </div>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="text-xs px-2 py-1 bg-red-500/20 hover:bg-red-500/30 rounded text-red-200"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         <div className="mt-10">
           {stage === "idle" && (

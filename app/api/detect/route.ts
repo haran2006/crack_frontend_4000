@@ -11,8 +11,8 @@ import { NextRequest, NextResponse } from "next/server";
 export const maxDuration = 60; // Allow up to 60s for AI inference / server wake-up
 
 const getBackendUrl = () => {
-  const envUrl = process.env.PYTHON_API_URL || process.env.NEXT_PUBLIC_API_URL;
-  if (!envUrl) return "http://localhost:8000/detect";
+  const envUrl = process.env.PYTHON_API_URL;
+  if (!envUrl) return "http://127.0.0.1:8000/detect";
   if (envUrl.endsWith("/detect")) return envUrl;
   return `${envUrl.replace(/\/$/, "")}/detect`;
 };
