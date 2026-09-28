@@ -45,10 +45,12 @@ export default function CrackDetection() {
       setStage("results");
     } catch (err: unknown) {
       console.error("Detection error:", err);
-      const msg = err instanceof Error ? err.message : String(err);
+      const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
       setErrorMessage(
         msg.includes("Failed to fetch") || msg.includes("502")
-          ? "Unable to connect to the backend server. Please verify that python api.py is running on port 8000."
+          ? isLocal
+            ? "Unable to connect to local backend. Please verify python api.py is running on port 8000."
+            : "The cloud AI backend is waking up from idle sleep. Please wait ~15-20 seconds and click Detect again."
           : msg
       );
       setStage("idle");
