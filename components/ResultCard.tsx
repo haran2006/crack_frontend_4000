@@ -54,7 +54,7 @@ export default function ResultCard({
             )}
           >
             {result.hasCrack ? <AlertTriangle className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
-            {result.hasCrack ? "Crack detected" : "No crack"}
+            {result.hasCrack ? "Crack detected" : "No crack detected"}
           </span>
         </div>
       </div>

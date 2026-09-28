@@ -6,13 +6,13 @@ import { CrackRegion } from "@/types/detection";
 function classColor(className?: string): { border: string; fill: string; label: string } {
   const name = className ?? "";
   if (name.includes("damaged")) {
-    return { border: "#f59e0b", fill: "rgba(245,158,11,0.18)", label: "#f59e0b" };
+    return { border: "#a855f7", fill: "rgba(168,85,247,0.18)", label: "#a855f7" }; // Purple
   }
   if (name === "n") {
-    return { border: "#8b5cf6", fill: "rgba(139,92,246,0.18)", label: "#8b5cf6" };
+    return { border: "#3b82f6", fill: "rgba(59,130,246,0.18)", label: "#3b82f6" }; // Blue
   }
-  // default → cyan/teal (matches YOLO's default class-0 colour)
-  return { border: "#06b6d4", fill: "rgba(6,182,212,0.18)", label: "#06b6d4" };
+  // default (crack-dedection-2) → red
+  return { border: "#ef4444", fill: "rgba(239,68,68,0.18)", label: "#ef4444" }; // Red
 }
 
 function friendlyLabel(className?: string): string {
