@@ -42,40 +42,28 @@ export default function ImageViewer({
       role="dialog"
       aria-modal="true"
       aria-label={`Viewing ${current.fileName}`}
-      className="fixed inset-0 z-[70] bg-black/90 flex flex-col animate-in fade-in zoom-in-95 duration-200 ease-out"
+      className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200"
     >
-      <div className="flex items-center justify-between px-4 sm:px-6 py-4 text-ink">
-        <span className="text-sm text-ink-muted truncate">{current.fileName}</span>
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => setZoom((z) => Math.max(1, z - 0.25))}
-            aria-label="Zoom out"
-            className="p-2 rounded-lg hover:bg-white/10 focus-ring"
-          >
-            <ZoomOut className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setZoom((z) => Math.min(3, z + 0.25))}
-            aria-label="Zoom in"
-            className="p-2 rounded-lg hover:bg-white/10 focus-ring"
-          >
-            <ZoomIn className="w-4 h-4" />
-          </button>
+      <div className="relative bg-surface rounded-2xl shadow-2xl overflow-hidden flex flex-col max-w-4xl w-full max-h-[85vh] animate-in zoom-in-95 duration-200 ease-out border border-border">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-white/5">
+          <span className="text-sm font-medium truncate pr-4">{current.fileName}</span>
+          <div className="flex items-center gap-1 shrink-0">
+            <button onClick={() => setZoom((z) => Math.max(1, z - 0.25))} className="p-1.5 rounded-lg hover:bg-white/10">
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <button onClick={() => setZoom((z) => Math.min(3, z + 0.25))} className="p-1.5 rounded-lg hover:bg-white/10">
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <div className="w-px h-4 bg-border mx-1" />
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10 text-ink-muted hover:text-signal-danger">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="relative flex-1 overflow-hidden grid place-items-center px-4 pb-6">
-        {index > 0 && (
-          <button
-            onClick={() => onNavigate(index - 1)}
-            aria-label="Previous image"
-            className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 focus-ring"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-        )}
-
-        <div className="relative max-w-full max-h-full overflow-auto">
+        {/* Content */}
+        <div className="relative flex-1 overflow-auto bg-black/20 p-4 grid place-items-center">
           <div
             className="relative inline-block transition-transform duration-200"
             style={{ transform: `scale(${zoom})` }}
@@ -84,30 +72,29 @@ export default function ImageViewer({
             <img
               src={current.imageUrl}
               alt={current.fileName}
-              className="max-w-[85vw] max-h-[70vh] object-contain rounded-lg"
+              className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-lg"
             />
-            {/* RegionOverlay reacts to threshold — works in fullscreen too */}
             <RegionOverlay regions={current.regions} threshold={threshold} />
-
-            <button 
-              onClick={onClose} 
-              aria-label="Close viewer" 
-              className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white hover:bg-black/80 focus-ring backdrop-blur-md transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
-        </div>
 
-        {index < results.length - 1 && (
-          <button
-            onClick={() => onNavigate(index + 1)}
-            aria-label="Next image"
-            className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 focus-ring"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        )}
+          {/* Navigation */}
+          {index > 0 && (
+            <button
+              onClick={() => onNavigate(index - 1)}
+              className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/80 backdrop-blur-sm"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          )}
+          {index < results.length - 1 && (
+            <button
+              onClick={() => onNavigate(index + 1)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/80 backdrop-blur-sm"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
