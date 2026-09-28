@@ -42,7 +42,7 @@ export default function ImageViewer({
       role="dialog"
       aria-modal="true"
       aria-label={`Viewing ${current.fileName}`}
-      className="fixed inset-0 z-[70] bg-black/90 flex flex-col"
+      className="fixed inset-0 z-[70] bg-black/90 flex flex-col animate-in fade-in zoom-in-95 duration-200 ease-out"
     >
       <div className="flex items-center justify-between px-4 sm:px-6 py-4 text-ink">
         <span className="text-sm text-ink-muted truncate">{current.fileName}</span>
@@ -60,9 +60,6 @@ export default function ImageViewer({
             className="p-2 rounded-lg hover:bg-white/10 focus-ring"
           >
             <ZoomIn className="w-4 h-4" />
-          </button>
-          <button onClick={onClose} aria-label="Close viewer" className="p-2 rounded-lg hover:bg-white/10 focus-ring">
-            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -91,6 +88,14 @@ export default function ImageViewer({
             />
             {/* RegionOverlay reacts to threshold — works in fullscreen too */}
             <RegionOverlay regions={current.regions} threshold={threshold} />
+
+            <button 
+              onClick={onClose} 
+              aria-label="Close viewer" 
+              className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white hover:bg-black/80 focus-ring backdrop-blur-md transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 

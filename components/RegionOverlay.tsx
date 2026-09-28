@@ -16,10 +16,10 @@ function classColor(className?: string): { border: string; fill: string; label: 
 }
 
 function friendlyLabel(className?: string): string {
-  if (!className) return "crack";
-  if (className === "crack-dedection-2") return "crack";
-  if (className === "damaged") return "damaged";
-  if (className === "n") return "region";
+  if (!className) return "Crack";
+  if (className === "crack-dedection-2") return "Crack";
+  if (className === "damaged") return "Damaged";
+  if (className === "n") return "NIL";
   return className;
 }
 
