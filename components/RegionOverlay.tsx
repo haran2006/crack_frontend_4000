@@ -1,23 +1,41 @@
 import { CrackRegion } from "@/types/detection";
 
-// Colour palette per class — mirrors YOLO's default colour scheme.
-// Indexed by a simple hash of the class name so each class always gets
-// the same colour regardless of detection order.
-function classColor(className?: string): { border: string; fill: string; label: string } {
-  const name = className ?? "";
-  if (name.includes("Damaged")) {
-    return { border: "#a855f7", fill: "rgba(168,85,247,0.18)", label: "#a855f7" }; // Purple
+// Normalise any className the backend might send → one of: "crack" | "damaged" | "nocrack"
+function normalise(raw?: string): "crack" | "damaged" | "nocrack" {
+  const s = (raw ?? "").trim().toLowerCase();
+  // No-crack variants:  "n", "nil", "no crack", "no_crack", "nocrack"
+  if (s === "n" || s === "nil" || s === "no crack" || s === "no_crack" || s === "nocrack") {
+    return "nocrack";
   }
-  if (name === "NIL") {
-    return { border: "#3b82f6", fill: "rgba(59,130,246,0.18)", label: "#3b82f6" }; // Blue
+  // Damaged variants
+  if (s === "damaged") {
+    return "damaged";
   }
-  // default (crack-dedection-2) → red
-  return { border: "#ef4444", fill: "rgba(239,68,68,0.18)", label: "#ef4444" }; // Red
+  // Crack variants: "crack", "crack-dedection-2", "crack-detection-2", or anything with "crack"
+  if (s.includes("crack")) {
+    return "crack";
+  }
+  // Fallback — treat unknown as no-crack so we never falsely alarm
+  return "nocrack";
+}
+
+function classColor(className?: string): { border: string; fill: string } {
+  const type = normalise(className);
+  if (type === "damaged") {
+    return { border: "#a855f7", fill: "rgba(168,85,247,0.18)" }; // Purple
+  }
+  if (type === "nocrack") {
+    return { border: "#3b82f6", fill: "rgba(59,130,246,0.18)" }; // Blue
+  }
+  // crack → Red
+  return { border: "#ef4444", fill: "rgba(239,68,68,0.18)" };
 }
 
 function friendlyLabel(className?: string): string {
-  if (!className) return "Crack";
-  return className;
+  const type = normalise(className);
+  if (type === "nocrack") return "No Crack";
+  if (type === "damaged") return "Damaged";
+  return "Crack";
 }
 
 export default function RegionOverlay({
@@ -55,12 +73,11 @@ export default function RegionOverlay({
               borderRadius: "3px",
             }}
           >
-            {/* Label chip — same style as YOLO result.plot() */}
             <span
               className="absolute -top-[18px] left-0 text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded-t whitespace-nowrap"
               style={{
                 backgroundColor: color.border,
-                color: "#000",
+                color: "#fff",
                 lineHeight: "1.2",
               }}
             >
