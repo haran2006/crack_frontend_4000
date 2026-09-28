@@ -5,10 +5,10 @@ import { CrackRegion } from "@/types/detection";
 // the same colour regardless of detection order.
 function classColor(className?: string): { border: string; fill: string; label: string } {
   const name = className ?? "";
-  if (name.includes("damaged")) {
+  if (name.includes("Damaged")) {
     return { border: "#a855f7", fill: "rgba(168,85,247,0.18)", label: "#a855f7" }; // Purple
   }
-  if (name === "n") {
+  if (name === "NIL") {
     return { border: "#3b82f6", fill: "rgba(59,130,246,0.18)", label: "#3b82f6" }; // Blue
   }
   // default (crack-dedection-2) → red
@@ -17,9 +17,6 @@ function classColor(className?: string): { border: string; fill: string; label: 
 
 function friendlyLabel(className?: string): string {
   if (!className) return "Crack";
-  if (className === "crack-dedection-2") return "Crack";
-  if (className === "damaged") return "Damaged";
-  if (className === "n") return "NIL";
   return className;
 }
 
