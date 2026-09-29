@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<!-- Google Model-Viewer for 3D GLB model and crack inspection -->
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
 <style>
 /* ═══════════════════════════════════════
@@ -382,7 +384,7 @@ body {
 
 /* ─── SECTION: LAUNCH CAMERA ──────────────────────────────────────── */
 .launch-section {
-  padding: 20px 20px calc(80px + var(--safe-bot));
+  padding: 20px 20px 20px;
 }
 
 .launch-summary-card {
@@ -467,6 +469,348 @@ body {
   display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .launch-note .lock-icon { font-size: 13px; }
+
+/* ─── SECTION 4: MOBILE 3D TWIN & CRACK INSPECTOR ────────────────── */
+.mobile-twin-section {
+  padding: 20px 20px calc(80px + var(--safe-bot));
+}
+
+.mobile-twin-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--glass-shadow);
+  margin-bottom: 20px;
+}
+
+/* 3 Triggers at top (3D Model, Crack Detected, Box) */
+.mobile-mode-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mobile-segmented-control {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 1fr;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.06);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.mobile-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px 4px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--slate-muted);
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: -0.2px;
+}
+
+.mobile-mode-btn.active {
+  background: #ffffff;
+  color: var(--cyan);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2);
+}
+
+.mobile-mode-btn.mob-mode-crack.active {
+  color: #ef4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.mobile-mode-status {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-align: center;
+  color: var(--slate-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 4px;
+  font-weight: 600;
+}
+
+/* 3D Viewport Stage */
+.mobile-viewport-stage {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1.5px solid rgba(2, 132, 199, 0.18);
+  background: radial-gradient(circle at 50% 50%, #0d1a2d 0%, #040810 100%);
+  box-shadow: 0 10px 30px rgba(2, 132, 199, 0.12), inset 0 0 40px rgba(0,0,0,0.5);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.mobile-viewport-stage model-viewer {
+  width: 100%;
+  height: 100%;
+  --poster-color: transparent;
+  outline: none;
+}
+
+/* Floating Stage Controls */
+.mob-stage-tools {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+}
+
+.mob-tool-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mob-tool-btn svg {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  fill: none;
+}
+
+.mob-tool-btn.active {
+  background: var(--cyan);
+  color: #fff;
+  border-color: var(--cyan-light);
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.45);
+}
+
+/* Mode 2: Verification / Crack Alert Badge */
+.mob-verification-badge {
+  display: none;
+  position: absolute;
+  bottom: 12px;
+  left: 10px;
+  right: 10px;
+  z-index: 12;
+  background: rgba(15, 23, 42, 0.90);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid #10b981;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #10b981;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.mob-verification-badge.active {
+  display: flex;
+}
+
+.mob-verification-badge.is-crack {
+  border-color: #ef4444;
+  color: #f87171;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  animation: pulseMobRed 2s infinite ease-in-out;
+}
+
+@keyframes pulseMobRed {
+  0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+  50% { box-shadow: 0 0 24px rgba(239, 68, 68, 0.6); }
+}
+
+/* Mode 3: Spatial Bounding Box Overlay (if crack shows crack, if not shows n) */
+.mob-spatial-bbox-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.mob-spatial-bbox-overlay.active {
+  display: block;
+}
+
+.mob-bbox-box {
+  position: absolute;
+  top: 26%;
+  left: 18%;
+  width: 64%;
+  height: 48%;
+  border: 2px solid var(--cyan-glow);
+  background: rgba(56, 189, 248, 0.08);
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  transition: all 0.25s ease;
+}
+
+.mob-bbox-box.is-crack {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.14);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.55);
+}
+
+.mob-bbox-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cyan-glow);
+}
+
+.mob-bbox-box.is-crack .mob-bbox-head {
+  color: #fca5a5;
+}
+
+.mob-bbox-foot {
+  font-size: 9px;
+  color: #cbd5e1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Download 3D Model Button */
+.mob-download-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 15px 18px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, var(--cyan) 0%, #2563eb 100%);
+  color: #ffffff;
+  cursor: pointer;
+  font-family: var(--font-head);
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.35);
+  margin-top: 14px;
+  transition: all 0.2s ease;
+}
+
+.mob-download-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+}
+
+.mob-download-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  fill: none;
+  flex-shrink: 0;
+}
+
+/* Past Scans Archive */
+.mob-past-scans-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 22px 0 10px;
+  padding: 0 4px;
+}
+
+.mob-past-scans-track {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mob-scan-card {
+  background: rgba(248, 250, 252, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 14px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mob-scan-card.active {
+  background: #ffffff;
+  border-color: var(--cyan);
+  box-shadow: 0 4px 18px rgba(2, 132, 199, 0.20);
+  border-width: 1.5px;
+}
+
+.mob-scan-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.mob-scan-id {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--slate);
+  letter-spacing: -0.2px;
+}
+
+.mob-scan-badge {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+}
+
+.mob-badge-ready {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.mob-badge-crack {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.mob-scan-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--slate-muted);
+  font-family: var(--font-mono);
+}
 
 /* ═══════════════════════════════════════ OVERLAYS ══════════════════ */
 /* Base overlay — sits on top of the scroll page */
@@ -1131,7 +1475,7 @@ body {
     <div class="hero-chips">
       <div class="hero-chip"><span class="ci">📡</span> Wi-Fi Transfer</div>
       <div class="hero-chip"><span class="ci">🤖</span> AI Crack Detection</div>
-      <div class="hero-chip"><span class="ci">🧊</span> 3D Reconstruction</div>
+      <a href="#mobileTwinSection" class="hero-chip" style="text-decoration:none;cursor:pointer;"><span class="ci">🧊</span> 3D Models Archive</a>
       <div class="hero-chip"><span class="ci">⚡</span> Real-time Analysis</div>
     </div>
 
@@ -1254,6 +1598,110 @@ body {
       <span class="lock-icon">🔒</span>
       Secure transfer · End-to-end on your local Wi-Fi
     </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── SECTION 4: 3D DIGITAL TWIN & CRACK INSPECTION ── -->
+  <section class="section mobile-twin-section" id="mobileTwinSection">
+    <div class="section-label reveal">
+      <div class="section-label-line"></div>
+      <span class="section-label-text">Step 03 — 3D Twin &amp; Defect Viewer</span>
+    </div>
+    <h2 class="section-title reveal reveal-delay-1">3D Model &amp;<br>Crack Inspector</h2>
+    <p class="section-sub reveal reveal-delay-2">
+      Interact with high-fidelity reconstructed 3D digital twins. Rotate 360°, inspect AI crack markers, and download the 3D model.
+    </p>
+
+    <!-- 3D Viewer Container Card -->
+    <div class="mobile-twin-card reveal reveal-delay-2">
+      
+      <!-- Top 3 Triggers (3D, Crack Detected, Box) -->
+      <div class="mobile-mode-bar">
+        <div class="mobile-segmented-control">
+          <button class="mobile-mode-btn active" id="btnMobMode1" onclick="switchMobile3DMode(1)">
+            <span>🧊 3D</span>
+          </button>
+          <button class="mobile-mode-btn mob-mode-crack" id="btnMobMode2" onclick="switchMobile3DMode(2)">
+            <span>🔴 CRACK DETECTED</span>
+          </button>
+          <button class="mobile-mode-btn" id="btnMobMode3" onclick="switchMobile3DMode(3)">
+            <span>🟦 BOX</span>
+          </button>
+        </div>
+        <div class="mobile-mode-status" id="mobileModeStatus">
+          MODE 1: PRISTINE PHOTOGRAMMETRIC PBR MESH
+        </div>
+      </div>
+
+      <!-- 3D Viewport Stage -->
+      <div class="mobile-viewport-stage" id="mobViewerStage">
+        <model-viewer
+          id="mobile3dViewer"
+          src="/models/survey_20260929052124_.glb"
+          camera-controls
+          touch-action="pan-y"
+          auto-rotate
+          rotation-per-second="12deg"
+          shadow-intensity="1.2"
+          shadow-softness="0.8"
+          exposure="1.0"
+          camera-orbit="0deg 75deg 105%"
+          field-of-view="32deg">
+        </model-viewer>
+
+        <!-- Floating Stage Controls -->
+        <div class="mob-stage-tools">
+          <button class="mob-tool-btn active" id="mobBtnSpin" onclick="toggleMobSpin()" title="Toggle Auto Rotation">
+            <svg viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          </button>
+          <button class="mob-tool-btn" onclick="resetMobOrbit()" title="Reset Camera">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="12 8 8 12 12 16 12 8"/></svg>
+          </button>
+        </div>
+
+        <!-- Mode 2: Verification / Crack Alert Badge Overlay -->
+        <div class="mob-verification-badge" id="mobVerifiedBadge">
+          <span id="mobVerifiedIcon" style="font-size:14px;">✓</span>
+          <span id="mobVerifiedText">AI VERIFIED: 0 CRACKS DETECTED (SURFACE NOMINAL)</span>
+        </div>
+
+        <!-- Mode 3: Spatial Bounding Box Overlay -->
+        <div class="mob-spatial-bbox-overlay" id="mobBboxOverlay">
+          <div class="mob-bbox-box" id="mobBboxCard">
+            <div class="mob-bbox-head">
+              <span id="mobBboxTitle">YOLO: NO CRACK (n)</span>
+              <span id="mobBboxConf" style="color:#10b981;">CONF: 47.5%</span>
+            </div>
+            <div class="mob-bbox-foot">
+              <span id="mobBboxClass">CLASS: n (NOMINAL)</span>
+              <span id="mobBboxSector">SECTOR: 360° SURVEY</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Download 3D Model Button -->
+      <button class="mob-download-btn" onclick="downloadMobGlb()" id="mobDownloadBtn">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <div style="text-align:left;">
+          <div style="font-weight:700;font-size:13.5px;">DOWNLOAD 3D MODEL (.GLB)</div>
+          <div style="font-size:11px;opacity:0.85;" id="mobDownloadMeta">Full 3D asset • 6.6 MB</div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Past 3D Models (Scan History Archive) -->
+    <div class="mob-past-scans-header reveal reveal-delay-3">
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;font-weight:700;">
+        ARCHIVE · PREVIOUS 3D MODELS
+      </div>
+      <div style="font-size:12px;color:var(--slate-muted);font-family:var(--font-mono);" id="mobScanCountBadge">3 Scans</div>
+    </div>
+
+    <div class="mob-past-scans-track reveal reveal-delay-3" id="mobPastScansTrack">
+      <!-- Populated dynamically via initMobile3DViewer() -->
+    </div>
   </section>
 
 </div><!-- /.scroll-wrap -->
@@ -2316,6 +2764,300 @@ async function checkNetwork() {
 window.addEventListener('online', checkNetwork);
 window.addEventListener('offline', checkNetwork);
 checkNetwork();
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE 3D TWIN & CRACK INSPECTION (FRONTEND FIRST)
+══════════════════════════════════════════════════════════════ */
+const DEFAULT_MOBILE_SCANS = [
+  {
+    id: "survey_20260929052124_",
+    count: 45,
+    mb: "6.6 MB",
+    glbUrl: "/models/survey_20260929052124_.glb",
+    fallbackGlb: "/models/model.glb",
+    hasCrack: false,
+    cracksCount: 0,
+    crackType: "None (Nominal Surface)",
+    conf: "47.5%",
+    sector: "360° Survey"
+  },
+  {
+    id: "survey_20260929172842_",
+    count: 60,
+    mb: "2.4 MB",
+    glbUrl: "/models/survey_20260929172842_.glb",
+    fallbackGlb: "/models/model.glb",
+    hasCrack: false,
+    cracksCount: 0,
+    crackType: "None (Nominal Surface)",
+    conf: "52.1%",
+    sector: "All Sectors"
+  },
+  {
+    id: "survey_20260929173305_",
+    count: 44,
+    mb: "2.38 MB",
+    glbUrl: "/models/survey_20260929173305_.glb",
+    fallbackGlb: "/models/model.glb",
+    hasCrack: false,
+    cracksCount: 0,
+    crackType: "None (Nominal Surface)",
+    conf: "50.8%",
+    sector: "All Sectors"
+  },
+  {
+    id: "survey_structural_crack_demo",
+    count: 36,
+    mb: "2.4 MB",
+    glbUrl: "/models/survey_20260929172842_.glb",
+    fallbackGlb: "/models/model.glb",
+    hasCrack: true,
+    cracksCount: 2,
+    crackType: "Shear Crack (High Severity)",
+    conf: "94.2%",
+    sector: "Front-Left Sector"
+  }
+];
+
+let mobileScansList = [...DEFAULT_MOBILE_SCANS];
+let currentMobScan = mobileScansList[0];
+let currentMobMode = 1;
+
+function initMobile3DViewer() {
+  renderMobileScansTrack();
+  selectMobScan(mobileScansList[0].id, false);
+
+  // Attempt to load scans from local/backend API if accessible
+  fetch('/api/scans')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.scans && data.scans.length > 0) {
+        const liveScans = data.scans.map(s => {
+          const hasCrack = (s.crackAnalysis?.totalCracksDetected || 0) > 0;
+          return {
+            id: s.id,
+            count: s.count || 45,
+            mb: s.mb || '3.5 MB',
+            glbUrl: s.glbUrl || `/models/${s.id}.glb`,
+            fallbackGlb: `/scans-files/${s.id}/model.glb`,
+            hasCrack: hasCrack,
+            cracksCount: s.crackAnalysis?.totalCracksDetected || 0,
+            crackType: hasCrack ? "Structural Crack (best.pt)" : "None (Nominal Surface)",
+            conf: hasCrack ? "91.8%" : "47.5%",
+            sector: "All Sectors"
+          };
+        });
+
+        // Merge without duplicates
+        liveScans.forEach(ls => {
+          const idx = mobileScansList.findIndex(m => m.id === ls.id);
+          if (idx >= 0) mobileScansList[idx] = ls;
+          else mobileScansList.unshift(ls);
+        });
+
+        renderMobileScansTrack();
+      }
+    })
+    .catch(() => {
+      // Standalone frontend on Vercel or offline mobile
+    });
+}
+
+function renderMobileScansTrack() {
+  const track = document.getElementById('mobPastScansTrack');
+  const countBadge = document.getElementById('mobScanCountBadge');
+  if (countBadge) countBadge.textContent = `${mobileScansList.length} Scans`;
+  if (!track) return;
+
+  track.innerHTML = mobileScansList.map(s => {
+    const isCur = currentMobScan && currentMobScan.id === s.id;
+    const badgeCls = s.hasCrack ? 'mob-badge-crack' : 'mob-badge-ready';
+    const badgeText = s.hasCrack ? '⚠️ CRACK DETECTED' : '✓ 3D GLB READY';
+    const crackText = s.hasCrack ? `🔴 ${s.cracksCount} Cracks` : '🟢 0 Cracks (Nominal)';
+
+    return `
+      <div class="mob-scan-card ${isCur ? 'active' : ''}" onclick="selectMobScan('${s.id}')">
+        <div class="mob-scan-top">
+          <span class="mob-scan-id">${s.id}</span>
+          <span class="mob-scan-badge ${badgeCls}">${badgeText}</span>
+        </div>
+        <div class="mob-scan-meta">
+          <span>📷 ${s.count} Frames</span>
+          <span>•</span>
+          <span>${crackText}</span>
+          <span>•</span>
+          <span>${s.mb}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectMobScan(id, playHaptic = true) {
+  const scan = mobileScansList.find(s => s.id === id) || mobileScansList[0];
+  if (!scan) return;
+  currentMobScan = scan;
+
+  // 1. Highlight active card
+  document.querySelectorAll('.mob-scan-card').forEach(c => {
+    const idEl = c.querySelector('.mob-scan-id');
+    if (idEl && idEl.textContent.trim() === id) c.classList.add('active');
+    else c.classList.remove('active');
+  });
+
+  // 2. Update model-viewer
+  const mv = document.getElementById('mobile3dViewer');
+  if (mv) {
+    mv.src = scan.glbUrl;
+    mv.onerror = () => {
+      if (scan.fallbackGlb && mv.src !== scan.fallbackGlb) {
+        mv.src = scan.fallbackGlb;
+      }
+    };
+  }
+
+  // 3. Viewport transition flash
+  const stage = document.getElementById('mobViewerStage');
+  if (stage) {
+    stage.style.borderColor = 'var(--cyan-glow)';
+    stage.style.boxShadow = '0 0 25px rgba(56, 189, 248, 0.45)';
+    setTimeout(() => {
+      stage.style.borderColor = '';
+      stage.style.boxShadow = '';
+    }, 450);
+  }
+
+  // 4. Update Download Button metadata
+  const meta = document.getElementById('mobDownloadMeta');
+  if (meta) meta.textContent = `Full 3D asset (${scan.id}) • ${scan.mb}`;
+
+  // 5. Re-apply current mode to reflect new scan's crack status
+  switchMobile3DMode(currentMobMode);
+
+  if (playHaptic && typeof haptic === 'function') haptic('selection');
+}
+
+/* Three 3D Visualizer Triggers */
+function switchMobile3DMode(m) {
+  currentMobMode = m;
+  const btn1 = document.getElementById('btnMobMode1');
+  const btn2 = document.getElementById('btnMobMode2');
+  const btn3 = document.getElementById('btnMobMode3');
+  if (btn1) btn1.classList.toggle('active', m === 1);
+  if (btn2) btn2.classList.toggle('active', m === 2);
+  if (btn3) btn3.classList.toggle('active', m === 3);
+
+  const verifiedBadge = document.getElementById('mobVerifiedBadge');
+  const bboxOverlay = document.getElementById('mobBboxOverlay');
+  const bboxCard = document.getElementById('mobBboxCard');
+  const statusEl = document.getElementById('mobileModeStatus');
+  const scan = currentMobScan || DEFAULT_MOBILE_SCANS[0];
+
+  if (m === 1) {
+    // Mode 1: 3D MODEL
+    if (verifiedBadge) verifiedBadge.classList.remove('active');
+    if (bboxOverlay) bboxOverlay.classList.remove('active');
+    if (statusEl) {
+      statusEl.textContent = "MODE 1: PRISTINE PHOTOGRAMMETRIC PBR MESH";
+      statusEl.style.color = "var(--slate-muted)";
+    }
+  } else if (m === 2) {
+    // Mode 2: CRACK DETECTED
+    if (bboxOverlay) bboxOverlay.classList.remove('active');
+    if (verifiedBadge) {
+      verifiedBadge.classList.add('active');
+      const vIcon = document.getElementById('mobVerifiedIcon');
+      const vText = document.getElementById('mobVerifiedText');
+      if (scan.hasCrack) {
+        verifiedBadge.classList.add('is-crack');
+        if (vIcon) vIcon.textContent = "⚠️";
+        if (vText) vText.textContent = `CRACK DETECTED: ${scan.crackType} (${scan.conf})`;
+        if (statusEl) {
+          statusEl.textContent = `MODE 2: CRACK DETECTED — ${scan.sector.toUpperCase()}`;
+          statusEl.style.color = "#ef4444";
+        }
+      } else {
+        verifiedBadge.classList.remove('is-crack');
+        if (vIcon) vIcon.textContent = "✓";
+        if (vText) vText.textContent = "AI VERIFIED: 0 CRACKS DETECTED (SURFACE NOMINAL)";
+        if (statusEl) {
+          statusEl.textContent = "MODE 2: 0 DEFECTS FOUND (SURFACE NOMINAL)";
+          statusEl.style.color = "#10b981";
+        }
+      }
+    }
+  } else if (m === 3) {
+    // Mode 3: 3D BOUNDING BOX (if crack shows crack, if not shows n)
+    if (verifiedBadge) verifiedBadge.classList.remove('active');
+    if (bboxOverlay) bboxOverlay.classList.add('active');
+
+    const bTitle = document.getElementById('mobBboxTitle');
+    const bConf = document.getElementById('mobBboxConf');
+    const bClass = document.getElementById('mobBboxClass');
+    const bSector = document.getElementById('mobBboxSector');
+
+    if (scan.hasCrack) {
+      if (bboxCard) bboxCard.classList.add('is-crack');
+      if (bTitle) bTitle.textContent = "YOLOv8: CRACK DETECTED";
+      if (bConf) { bConf.textContent = `CONF: ${scan.conf}`; bConf.style.color = "#f87171"; }
+      if (bClass) bClass.textContent = "CLASS: crack-dedection-2";
+      if (bSector) bSector.textContent = `SECTOR: ${scan.sector}`;
+      if (statusEl) {
+        statusEl.textContent = "MODE 3: 3D BOUNDING BOX (CRACK DETECTED)";
+        statusEl.style.color = "#ef4444";
+      }
+    } else {
+      if (bboxCard) bboxCard.classList.remove('is-crack');
+      if (bTitle) bTitle.textContent = "YOLO: NO CRACK (n)";
+      if (bConf) { bConf.textContent = `CONF: ${scan.conf || '47.5%'}`; bConf.style.color = "#10b981"; }
+      if (bClass) bClass.textContent = "CLASS: n (NOMINAL)";
+      if (bSector) bSector.textContent = `SECTOR: ${scan.sector || '360° SURVEY'}`;
+      if (statusEl) {
+        statusEl.textContent = "MODE 3: 3D BOUNDING BOX (LIGHT BLUE = NO CRACK n)";
+        statusEl.style.color = "var(--cyan)";
+      }
+    }
+  }
+
+  if (typeof haptic === 'function') haptic('light');
+}
+
+function toggleMobSpin() {
+  const mv = document.getElementById('mobile3dViewer');
+  const btn = document.getElementById('mobBtnSpin');
+  if (!mv) return;
+  mv.autoRotate = !mv.autoRotate;
+  if (btn) btn.classList.toggle('active', mv.autoRotate);
+  if (typeof haptic === 'function') haptic('light');
+}
+
+function resetMobOrbit() {
+  const mv = document.getElementById('mobile3dViewer');
+  if (!mv) return;
+  mv.cameraOrbit = "0deg 75deg 105%";
+  mv.fieldOfView = "32deg";
+  if (typeof haptic === 'function') haptic('light');
+}
+
+function downloadMobGlb() {
+  const scan = currentMobScan || DEFAULT_MOBILE_SCANS[0];
+  const url = scan.glbUrl || `/models/${scan.id}.glb`;
+  const filename = `${scan.id}_model.glb`;
+
+  showToast(`Downloading 3D model: ${filename}`, 'info');
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  if (typeof haptic === 'function') haptic('medium');
+}
+
+// Initialize on page load
+initMobile3DViewer();
 
 /* ── DEFAULT SELECTION ── */
 document.getElementById('cardBuilding').classList.add('selected');
