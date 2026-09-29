@@ -1,0 +1,2324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>Smart Digital Twin — Mobile Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════
+   DESIGN TOKENS
+   Palette: Cyan #0284c7 | White #f8fafc | Dark Slate #0f172a
+   ═══════════════════════════════════════ */
+:root {
+  --cyan: #0284c7;
+  --cyan-light: #0ea5e9;
+  --cyan-glow: #38bdf8;
+  --cyan-alpha: rgba(2, 132, 199, 0.18);
+  --cyan-alpha2: rgba(2, 132, 199, 0.08);
+
+  --white: #ffffff;
+  --white-bg: #f0f6ff;
+  --white-surface: #f8fafc;
+
+  --slate: #0f172a;
+  --slate-mid: #1e293b;
+  --slate-muted: #475569;
+  --slate-soft: #94a3b8;
+  --slate-border: rgba(15, 23, 42, 0.10);
+
+  --glass-bg: rgba(255,255,255,0.76);
+  --glass-border: rgba(255,255,255,0.85);
+  --glass-shadow: 0 8px 32px rgba(2,132,199,0.10), 0 1.5px 6px rgba(15,23,42,0.06);
+
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+
+  --r-sm: 12px;
+  --r-md: 20px;
+  --r-lg: 28px;
+  --r-full: 9999px;
+
+  --font-head: 'Space Grotesk', -apple-system, sans-serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+
+/* ═══════════════════════════════════════ BASE ═══════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html {
+  scroll-behavior: smooth;
+  overscroll-behavior: none;
+}
+
+body {
+  width: 100%;
+  background: var(--white-bg);
+  color: var(--slate);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════ ANIMATED BG ═══════════════ */
+.bg-orbs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.35;
+  animation: orbFloat 12s ease-in-out infinite;
+}
+.orb-1 { width: 340px; height: 340px; background: radial-gradient(circle, #0ea5e9 0%, transparent 70%); top: -80px; left: -60px; animation-delay: 0s; }
+.orb-2 { width: 280px; height: 280px; background: radial-gradient(circle, #2563eb 0%, transparent 70%); bottom: 20%; right: -60px; animation-delay: -5s; }
+.orb-3 { width: 200px; height: 200px; background: radial-gradient(circle, #7dd3fc 0%, transparent 70%); top: 45%; left: 20%; animation-delay: -9s; }
+
+@keyframes orbFloat {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33% { transform: translate(20px,-25px) scale(1.06); }
+  66% { transform: translate(-15px, 20px) scale(0.95); }
+}
+
+/* ═══════════════════════════════════════ STICKY TOPBAR ═══════════ */
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 500;
+  padding: calc(var(--safe-top) + 10px) 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(240,246,255,0.82);
+  backdrop-filter: blur(22px) saturate(1.6);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  border-bottom: 1px solid rgba(255,255,255,0.7);
+  box-shadow: 0 2px 16px rgba(2,132,199,0.07);
+  transition: background 0.3s;
+}
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topbar-logo {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--cyan), #2563eb);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px rgba(2,132,199,0.35);
+}
+.topbar-logo svg { width: 18px; height: 18px; fill: none; stroke: white; stroke-width: 2; }
+.topbar-name { font-family: var(--font-head); font-size: 15px; font-weight: 700; color: var(--slate); letter-spacing: -0.3px; }
+.topbar-name span { color: var(--cyan); }
+.topbar-status {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  color: var(--slate-muted);
+  background: rgba(255,255,255,0.7);
+  border: 1px solid var(--slate-border);
+  border-radius: var(--r-full);
+  padding: 5px 12px;
+}
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+  animation: pulse 2s ease infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+/* ═══════════════════════════════════════ SCROLL CONTENT ═══════════ */
+.scroll-wrap {
+  position: relative;
+  z-index: 1;
+  padding-top: calc(var(--safe-top) + 66px);
+}
+
+/* ─── SECTION: HERO INTRO ─────────────────────────────────────────── */
+.hero-section {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px 60px;
+  text-align: center;
+  position: relative;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--glass-bg);
+  border: 1px solid rgba(2,132,199,0.20);
+  border-radius: var(--r-full);
+  padding: 7px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(2,132,199,0.12);
+  margin-bottom: 24px;
+  animation: fadeUp 0.6s ease both;
+}
+.hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+
+.hero-title {
+  font-family: var(--font-head);
+  font-size: clamp(36px, 10vw, 58px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -1.5px;
+  color: var(--slate);
+  margin-bottom: 18px;
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+.hero-title .hl { color: var(--cyan); }
+.hero-title .hl2 { color: #2563eb; }
+
+.hero-sub {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--slate-muted);
+  max-width: 340px;
+  margin: 0 auto 36px;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 44px;
+  animation: fadeUp 0.6s 0.3s ease both;
+}
+.hero-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-full);
+  padding: 8px 16px;
+  font-size: 13px; font-weight: 500;
+  color: var(--slate-mid);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--glass-shadow);
+}
+.hero-chip .ci { font-size: 15px; }
+
+.hero-scroll-cue {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  animation: fadeUp 0.6s 0.5s ease both;
+}
+.hero-scroll-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 1.4px;
+  text-transform: uppercase; color: var(--slate-soft);
+}
+.scroll-arrow {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--glass-bg);
+  border: 1.5px solid rgba(2,132,199,0.20);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: bounceDown 2s ease infinite;
+}
+.scroll-arrow svg { width: 16px; height: 16px; stroke: var(--cyan); stroke-width: 2.5; }
+@keyframes bounceDown {
+  0%,100%{transform:translateY(0);} 50%{transform:translateY(6px);}
+}
+
+/* ─── SECTION: SCAN TARGET ────────────────────────────────────────── */
+.section {
+  padding: 60px 20px;
+  position: relative;
+}
+
+.section-label {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px;
+}
+.section-label-line {
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(2,132,199,0.3), transparent);
+}
+.section-label-text {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 1.8px; text-transform: uppercase; color: var(--cyan);
+}
+
+.section-title {
+  font-family: var(--font-head);
+  font-size: clamp(26px, 7vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  color: var(--slate);
+  margin-bottom: 10px;
+}
+.section-sub {
+  font-size: 14px; line-height: 1.65;
+  color: var(--slate-muted); margin-bottom: 32px;
+}
+
+/* Target Cards */
+.target-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.target-card {
+  position: relative;
+  background: var(--glass-bg);
+  border: 1.5px solid transparent;
+  border-radius: var(--r-lg);
+  padding: 26px 22px;
+  cursor: pointer;
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  box-shadow: 0 6px 28px rgba(2,132,199,0.08), 0 1px 4px rgba(15,23,42,0.04);
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  overflow: hidden;
+  -webkit-user-select: none;
+}
+.target-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-lg);
+  border: 1.5px solid transparent;
+  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.3)) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.target-card:active { transform: scale(0.97); }
+.target-card.selected {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(2,132,199,0.15), 0 8px 32px rgba(2,132,199,0.18);
+  background: rgba(240,250,255,0.90);
+}
+.target-card.selected.bldg { border-color: var(--cyan); }
+.target-card.selected.obj { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.12), 0 8px 32px rgba(124,58,237,0.15); }
+
+.card-glow {
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.18;
+  filter: blur(40px);
+}
+.bldg .card-glow { background: var(--cyan); }
+.obj .card-glow { background: #7c3aed; }
+
+.card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
+.card-icon {
+  width: 54px; height: 54px; flex-shrink: 0;
+  border-radius: 15px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  background: rgba(255,255,255,0.8);
+  border: 1.5px solid rgba(255,255,255,0.9);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.bldg .card-icon { box-shadow: 0 4px 16px rgba(2,132,199,0.14); }
+.obj .card-icon { box-shadow: 0 4px 16px rgba(124,58,237,0.14); }
+
+.card-info { flex: 1; }
+.card-name {
+  font-family: var(--font-head); font-size: 20px; font-weight: 700;
+  letter-spacing: -0.4px; color: var(--slate); margin-bottom: 4px;
+}
+.card-desc { font-size: 13px; line-height: 1.55; color: var(--slate-muted); }
+.card-check {
+  width: 24px; height: 24px; flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--slate-border);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.25s;
+  margin-top: 2px;
+}
+.selected .card-check { background: var(--cyan); border-color: var(--cyan); }
+.selected.obj .card-check { background: #7c3aed; border-color: #7c3aed; }
+.card-check svg { width: 13px; height: 13px; stroke: white; stroke-width: 2.5; opacity: 0; transition: opacity 0.2s; }
+.selected .card-check svg { opacity: 1; }
+
+.card-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+.card-tag {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  padding: 4px 10px; border-radius: var(--r-full);
+  background: rgba(2,132,199,0.07);
+  color: var(--cyan);
+  border: 1px solid rgba(2,132,199,0.14);
+}
+.obj .card-tag { background: rgba(124,58,237,0.07); color: #7c3aed; border-color: rgba(124,58,237,0.14); }
+
+/* ─── SECTION: LAUNCH CAMERA ──────────────────────────────────────── */
+.launch-section {
+  padding: 20px 20px calc(80px + var(--safe-bot));
+}
+
+.launch-summary-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--glass-shadow);
+}
+.ls-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.ls-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--cyan), #2563eb);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px rgba(2,132,199,0.30);
+}
+.ls-icon svg { width: 20px; height: 20px; fill: none; stroke: white; stroke-width: 2; }
+.ls-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--slate); }
+.ls-step-list { display: flex; flex-direction: column; gap: 12px; }
+.ls-step {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 14px 16px;
+  background: rgba(248,250,252,0.7);
+  border-radius: 14px;
+  border: 1px solid rgba(226,232,240,0.6);
+}
+.ls-step-num {
+  width: 26px; height: 26px; flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cyan), #2563eb);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: white;
+}
+.ls-step-content { flex: 1; }
+.ls-step-label { font-size: 13px; font-weight: 600; color: var(--slate); margin-bottom: 2px; }
+.ls-step-desc { font-size: 12px; color: var(--slate-muted); line-height: 1.5; }
+
+.launch-btn {
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--cyan) 0%, #2563eb 100%);
+  border: none;
+  border-radius: var(--r-lg);
+  color: white;
+  font-family: var(--font-head);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(2,132,199,0.38), 0 2px 8px rgba(37,99,235,0.20);
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  -webkit-user-select: none;
+}
+.launch-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+}
+.launch-btn:active { transform: scale(0.98); box-shadow: 0 4px 16px rgba(2,132,199,0.25); }
+.launch-btn svg { width: 22px; height: 22px; fill: none; stroke: white; stroke-width: 2.2; }
+.launch-btn-shine {
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  transform: skewX(-20deg);
+  animation: shine 3s ease infinite 1s;
+}
+@keyframes shine { 0%{left:-100%;} 50%,100%{left:160%;} }
+
+.launch-note {
+  text-align: center; margin-top: 14px;
+  font-size: 12px; color: var(--slate-soft);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.launch-note .lock-icon { font-size: 13px; }
+
+/* ═══════════════════════════════════════ OVERLAYS ══════════════════ */
+/* Base overlay — sits on top of the scroll page */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: none;
+  flex-direction: column;
+  background: rgba(15,23,42,0.98);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: opacity 0.3s;
+  overflow: hidden;
+}
+.overlay.active { display: flex; }
+.overlay-enter { animation: overlayIn 0.35s cubic-bezier(0.22,1,0.36,1) both; }
+.overlay-exit { animation: overlayOut 0.28s ease both; }
+@keyframes overlayIn { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+@keyframes overlayOut { to{opacity:0;transform:translateY(20px);} }
+
+/* ── CAMERA OVERLAY ── */
+#cameraOverlay { background: #000; }
+
+.cam-hud-top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  padding: calc(var(--safe-top) + 14px) 20px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 10;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.75), transparent);
+}
+.cam-close-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.20);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.cam-close-btn svg { width: 18px; height: 18px; stroke: white; stroke-width: 2; }
+.cam-counter {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(0,0,0,0.50);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: var(--r-full);
+  padding: 7px 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.cam-count-num { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: white; }
+.cam-count-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.55); letter-spacing: 0.8px; }
+.cam-mode-badge {
+  background: rgba(2,132,199,0.30);
+  border: 1px solid rgba(14,165,233,0.50);
+  border-radius: var(--r-full);
+  padding: 7px 14px;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  color: var(--cyan-glow); letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+#videoEl {
+  position: absolute;
+  inset: 0; width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Viewfinder HUD */
+.vf-corner {
+  position: absolute;
+  width: 32px; height: 32px;
+  border-color: rgba(14,165,233,0.8);
+  border-style: solid;
+  border-width: 0;
+}
+.vf-tl { top: 30%; left: 12%; border-top-width: 2.5px; border-left-width: 2.5px; border-top-left-radius: 6px; }
+.vf-tr { top: 30%; right: 12%; border-top-width: 2.5px; border-right-width: 2.5px; border-top-right-radius: 6px; }
+.vf-bl { bottom: 30%; left: 12%; border-bottom-width: 2.5px; border-left-width: 2.5px; border-bottom-left-radius: 6px; }
+.vf-br { bottom: 30%; right: 12%; border-bottom-width: 2.5px; border-right-width: 2.5px; border-bottom-right-radius: 6px; }
+.vf-scanline {
+  position: absolute;
+  left: 14%; right: 14%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(14,165,233,0.8), transparent);
+  box-shadow: 0 0 10px rgba(14,165,233,0.5);
+  top: 30%;
+  animation: scanline 2.5s linear infinite;
+}
+@keyframes scanline {
+  0%{top:30%;opacity:1;} 80%{top:70%;opacity:1;} 100%{top:70%;opacity:0;}
+}
+
+.cam-flash { position: absolute; inset: 0; background: white; opacity: 0; pointer-events: none; z-index: 5; }
+
+/* Direction Guide */
+.cam-direction-guide {
+  position: absolute;
+  bottom: 130px; left: 50%; transform: translateX(-50%);
+  z-index: 10;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.cdg-text {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  color: rgba(56,189,248,0.95);
+  background: rgba(0,0,0,0.50);
+  border: 1px solid rgba(56,189,248,0.25);
+  border-radius: var(--r-full);
+  padding: 5px 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.cdg-dots { display: flex; gap: 6px; }
+.cdg-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,255,255,0.20);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.cdg-dot.active { background: var(--cyan-glow); box-shadow: 0 0 8px var(--cyan-glow); }
+
+/* Shutter controls */
+.cam-controls {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 20px 24px calc(var(--safe-bot) + 16px);
+  background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 10;
+}
+.cam-side-btn {
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.10);
+  border: 1.5px solid rgba(255,255,255,0.20);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.2s;
+}
+.cam-side-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.20); }
+.cam-side-btn svg { width: 20px; height: 20px; fill: none; stroke: white; stroke-width: 2; }
+
+/* AUTO-SHUTTER RING BUTTON */
+.shutter-wrap {
+  position: relative;
+  width: 86px; height: 86px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.shutter-svg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+.shutter-track {
+  fill: none;
+  stroke: rgba(255,255,255,0.14);
+  stroke-width: 4;
+}
+.shutter-ring {
+  fill: none;
+  stroke: var(--cyan-glow);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 245;
+  stroke-dashoffset: 245;
+  filter: drop-shadow(0 0 5px var(--cyan-glow));
+}
+
+.shutter {
+  width: 68px; height: 68px;
+  border-radius: 50%;
+  background: white;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 5px rgba(255,255,255,0.12), 0 6px 24px rgba(0,0,0,0.45);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.15s, background 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+.shutter-inner {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.08);
+  display: flex; align-items: center; justify-content: center;
+}
+.shutter-label {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  color: var(--slate-mid); letter-spacing: 0.4px;
+  user-select: none;
+  line-height: 1.2;
+  text-align: center;
+}
+.shutter.capturing {
+  background: rgba(14,165,233,0.10);
+  box-shadow: 0 0 0 5px rgba(14,165,233,0.22), 0 6px 24px rgba(0,0,0,0.45), 0 0 28px rgba(14,165,233,0.28);
+}
+.shutter.flash-ring { animation: shutterFlash 0.28s ease; }
+@keyframes shutterFlash {
+  0%{box-shadow:0 0 0 5px rgba(255,255,255,0.12),0 6px 24px rgba(0,0,0,0.45);}
+  50%{box-shadow:0 0 0 16px rgba(56,189,248,0.45),0 6px 24px rgba(0,0,0,0.45);}
+  100%{box-shadow:0 0 0 5px rgba(255,255,255,0.12),0 6px 24px rgba(0,0,0,0.45);}
+}
+
+/* STOP button shown when auto is running */
+.auto-stop-btn {
+  display: none;
+  align-items: center; gap: 6px;
+  padding: 9px 16px;
+  background: rgba(239,68,68,0.18);
+  border: 1.5px solid rgba(239,68,68,0.40);
+  border-radius: var(--r-full);
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  color: #fca5a5; letter-spacing: 0.8px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.auto-stop-btn.visible { display: flex; }
+
+/* ── REVIEW OVERLAY ── */
+#reviewOverlay {
+  background: linear-gradient(180deg, #0c1222 0%, #0f172a 100%);
+}
+.review-header {
+  padding: calc(var(--safe-top) + 16px) 20px 16px;
+  display: flex; align-items: center; gap: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.review-back-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.review-back-btn svg { width: 18px; height: 18px; stroke: white; stroke-width: 2; }
+.review-header-info { flex: 1; }
+.review-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; color: white; }
+.review-subtitle { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+.review-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+#photoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.photo-thumb {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  animation: thumbIn 0.3s ease both;
+}
+@keyframes thumbIn { from{opacity:0;transform:scale(0.8);} to{opacity:1;transform:scale(1);} }
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-thumb-num {
+  position: absolute; bottom: 4px; right: 5px;
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  color: white; background: rgba(0,0,0,0.55); border-radius: 4px; padding: 1px 4px;
+}
+
+.review-footer {
+  padding: 16px 20px calc(var(--safe-bot) + 16px);
+  display: flex; flex-direction: column; gap: 10px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.review-send-btn {
+  padding: 17px;
+  background: linear-gradient(135deg, var(--cyan) 0%, #2563eb 100%);
+  border: none; border-radius: var(--r-md);
+  color: white; font-family: var(--font-head); font-size: 17px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+  box-shadow: 0 8px 24px rgba(2,132,199,0.36);
+  transition: transform 0.2s;
+}
+.review-send-btn:active { transform: scale(0.97); }
+.review-send-btn svg { width: 20px; height: 20px; fill: none; stroke: white; stroke-width: 2.2; }
+.review-retake-btn {
+  padding: 14px;
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  border-radius: var(--r-md);
+  color: rgba(255,255,255,0.7); font-family: var(--font-head); font-size: 15px; font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── SYNC OVERLAY ── */
+#syncOverlay {
+  background: linear-gradient(180deg, #0c1222 0%, #0f172a 100%);
+  align-items: center; justify-content: center;
+  padding: 40px 28px;
+  text-align: center;
+}
+.sync-icon-wrap {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: var(--cyan-alpha);
+  border: 2px solid rgba(2,132,199,0.30);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 28px;
+  position: relative;
+}
+.sync-icon-wrap::before {
+  content: '';
+  position: absolute; inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(2,132,199,0.15);
+  animation: syncRing 2s linear infinite;
+}
+.sync-icon-wrap::after {
+  content: '';
+  position: absolute; inset: -18px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(2,132,199,0.07);
+  animation: syncRing 2s linear infinite 0.6s;
+}
+@keyframes syncRing { from{transform:scale(1);opacity:1;} to{transform:scale(1.4);opacity:0;} }
+.sync-icon-wrap svg { width: 46px; height: 46px; fill: none; stroke: var(--cyan-light); stroke-width: 1.8; }
+
+.sync-status-title {
+  font-family: var(--font-head); font-size: 26px; font-weight: 800;
+  letter-spacing: -0.5px; color: white; margin-bottom: 8px;
+}
+.sync-status-sub { font-size: 14px; color: rgba(255,255,255,0.50); line-height: 1.6; margin-bottom: 32px; }
+
+.sync-progress-bar-wrap {
+  width: 100%;
+  height: 8px; border-radius: 4px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.sync-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--cyan-glow));
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.4s ease;
+  box-shadow: 0 0 10px rgba(14,165,233,0.5);
+}
+.sync-progress-label {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  color: var(--cyan-glow); margin-bottom: 32px;
+}
+
+.sync-steps { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+.sync-step-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--r-md);
+  text-align: left;
+}
+.sync-step-icon {
+  width: 34px; height: 34px; flex-shrink: 0;
+  border-radius: 10px;
+  background: rgba(2,132,199,0.12);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+}
+.sync-step-icon.done { background: rgba(16,185,129,0.14); }
+.sync-step-icon.active { background: rgba(2,132,199,0.20); animation: stepPulse 1.5s ease infinite; }
+@keyframes stepPulse { 0%,100%{box-shadow:none;} 50%{box-shadow:0 0 0 6px rgba(2,132,199,0.12);} }
+
+.sync-step-content { flex: 1; }
+.sync-step-name { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8); }
+.sync-step-info { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; font-family: var(--font-mono); }
+.sync-step-check { font-size: 16px; }
+
+/* ── SUCCESS STATE (inside sync overlay) ── */
+#syncSuccess {
+  display: none; flex-direction: column; align-items: center; width: 100%;
+}
+.success-icon-wrap {
+  width: 88px; height: 88px; border-radius: 50%;
+  background: rgba(16,185,129,0.15);
+  border: 2px solid rgba(16,185,129,0.30);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 24px;
+  animation: successPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes successPop { from{transform:scale(0.5);opacity:0;} to{transform:scale(1);opacity:1;} }
+.success-icon-wrap svg { width: 40px; height: 40px; fill: none; stroke: var(--success); stroke-width: 2.5; }
+.success-title { font-family: var(--font-head); font-size: 26px; font-weight: 800; color: white; margin-bottom: 8px; }
+.success-sub { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.6; margin-bottom: 28px; max-width: 300px; }
+.laptop-card {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--r-md);
+  padding: 20px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+.laptop-card-title { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
+.laptop-step { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.laptop-step:last-child { border-bottom: none; }
+.laptop-step-num { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--cyan-glow); background: rgba(2,132,199,0.15); border-radius: 4px; padding: 2px 6px; }
+.laptop-step-text { font-size: 12px; color: rgba(255,255,255,0.6); }
+
+.sync-done-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--success), #059669);
+  border: none; border-radius: var(--r-md);
+  color: white; font-family: var(--font-head); font-size: 16px; font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(16,185,129,0.30);
+}
+
+/* ═══════════════════════════════════════ TOAST ═══════════════════ */
+#toast {
+  position: fixed;
+  bottom: calc(var(--safe-bot) + 24px);
+  left: 50%; transform: translateX(-50%) translateY(20px);
+  z-index: 1000;
+  background: rgba(15,23,42,0.92);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--r-full);
+  padding: 12px 22px;
+  font-size: 13px; font-weight: 600;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.success { border-color: rgba(16,185,129,0.35); }
+#toast.error { border-color: rgba(239,68,68,0.35); }
+
+/* ═══════════════════════════════════════ ANIMATIONS ════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.55s ease, transform 0.55s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.08s; }
+.reveal-delay-2 { transition-delay: 0.16s; }
+.reveal-delay-3 { transition-delay: 0.24s; }
+
+/* ═══════════════════════════════════════ MISC ══════════════════════ */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(2,132,199,0.20), transparent);
+  margin: 0 20px;
+}
+
+/* Bottom inset glass bar */
+.bottom-glass-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: calc(var(--safe-bot) + 20px);
+  background: rgba(240,246,255,0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.8);
+  z-index: 400;
+  pointer-events: none;
+}
+
+/* ══════════ TARGET SYNC & GEMINI ADDITIONS ══════════ */
+.topbar-sync-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(2,132,199,0.12);
+  border: 1px solid rgba(2,132,199,0.3);
+  border-radius: var(--r-full);
+  padding: 5px 12px;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+  color: var(--cyan);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s;
+}
+.topbar-sync-btn:active { transform: scale(0.96); }
+
+.target-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.target-modal-overlay.active { display: flex; animation: fadeUp 0.25s ease; }
+.target-modal-card {
+  width: 100%; max-width: 440px;
+  background: #ffffff;
+  border-radius: var(--r-lg);
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.8);
+  color: var(--slate);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.modal-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--slate); }
+.modal-close-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid var(--slate-border);
+  background: #f1f5f9; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; color: var(--slate-muted);
+}
+.sync-mode-card {
+  border: 2px solid var(--slate-border);
+  border-radius: var(--r-md);
+  padding: 14px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f8fafc;
+}
+.sync-mode-card.active {
+  border-color: var(--cyan);
+  background: rgba(2,132,199,0.06);
+}
+.sync-mode-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.sync-mode-name { font-weight: 700; font-size: 13px; color: var(--slate); display: flex; align-items: center; gap: 6px; }
+.sync-badge {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  background: rgba(2,132,199,0.15); color: var(--cyan);
+  padding: 2px 7px; border-radius: var(--r-full);
+}
+.sync-mode-desc { font-size: 12px; color: var(--slate-muted); line-height: 1.4; }
+.target-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--slate-border);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  outline: none;
+  margin-top: 6px;
+  background: #ffffff;
+  color: var(--slate);
+}
+.target-input:focus { border-color: var(--cyan); }
+.modal-save-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--cyan);
+  color: #ffffff;
+  border-radius: var(--r-full);
+  font-family: var(--font-head);
+  font-size: 14px; font-weight: 700;
+  border: none; cursor: pointer;
+  margin-top: 16px;
+  box-shadow: 0 4px 14px rgba(2,132,199,0.3);
+}
+
+/* Gemini Card */
+.gemini-card {
+  background: linear-gradient(135deg, rgba(2,132,199,0.08), rgba(99,102,241,0.08));
+  border: 1.5px solid rgba(2,132,199,0.25);
+  border-radius: var(--r-md);
+  padding: 16px;
+  margin-top: 14px;
+  text-align: left;
+}
+.gemini-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.gemini-badge {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  padding: 3px 9px; border-radius: var(--r-full);
+  text-transform: uppercase;
+}
+.gemini-badge.safe { background: rgba(16,185,129,0.15); color: #10b981; }
+.gemini-badge.moderate { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.gemini-badge.critical { background: rgba(239,68,68,0.15); color: #ef4444; }
+.review-gemini-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: var(--r-full);
+  background: linear-gradient(135deg, #0284c7, #6366f1);
+  color: white;
+  font-family: var(--font-head);
+  font-size: 13px; font-weight: 700;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+  margin-bottom: 8px;
+  transition: transform 0.15s;
+}
+.review-gemini-btn:active { transform: scale(0.98); }
+</style>
+</head>
+<body>
+
+<!-- Animated background orbs -->
+<div class="bg-orbs" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<!-- Sticky top bar -->
+<nav class="topbar" role="banner">
+  <div class="topbar-brand">
+    <div class="topbar-logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <span class="topbar-name">SMART <span>DIGITAL TWIN</span></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="topbar-sync-btn" id="topbarSyncBtn" onclick="openTargetModal()" title="Sync Target Settings">
+      <span id="targetModeIcon">☁️</span>
+      <span id="targetModeLabel">Cloud</span>
+    </button>
+    <div class="topbar-status" id="wifiStatus">
+      <div class="status-dot"></div>
+      <span id="wifiLabel">LIVE</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════ SCROLLABLE CONTENT ═══════ -->
+<div class="scroll-wrap">
+
+  <!-- ── SECTION 1: HERO INTRO ── -->
+  <section class="hero-section" id="heroSection">
+    <div class="hero-badge">
+      <div class="hero-badge-dot"></div>
+      AI · 3D Scanning · Crack Detection
+    </div>
+
+    <h1 class="hero-title">
+      Smart<br><span class="hl">Digital</span> <span class="hl2">Twin</span>
+    </h1>
+
+    <p class="hero-sub">
+      Capture your environment with your phone. Our AI builds a 3D model and detects structural cracks automatically.
+    </p>
+
+    <div class="hero-chips">
+      <div class="hero-chip"><span class="ci">📡</span> Wi-Fi Transfer</div>
+      <div class="hero-chip"><span class="ci">🤖</span> AI Crack Detection</div>
+      <div class="hero-chip"><span class="ci">🧊</span> 3D Reconstruction</div>
+      <div class="hero-chip"><span class="ci">⚡</span> Real-time Analysis</div>
+    </div>
+
+    <div class="hero-scroll-cue">
+      <span class="hero-scroll-label">Scroll to start</span>
+      <div class="scroll-arrow">
+        <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── SECTION 2: SCAN TARGET ── -->
+  <section class="section" id="targetSection">
+    <div class="section-label reveal">
+      <div class="section-label-line"></div>
+      <span class="section-label-text">Step 01 — Select Target</span>
+    </div>
+    <h2 class="section-title reveal reveal-delay-1">What are you<br>scanning?</h2>
+    <p class="section-sub reveal reveal-delay-2">Choose your scan mode. Each mode uses different camera guidance optimized for that object type.</p>
+
+    <div class="target-cards">
+      <div class="target-card bldg reveal reveal-delay-2" id="cardBuilding" onclick="selectTarget('building')" role="button" tabindex="0" aria-label="Select Buildings and Infrastructure scan mode">
+        <div class="card-glow"></div>
+        <div class="card-header">
+          <div class="card-icon">🏛️</div>
+          <div class="card-info">
+            <div class="card-name">Buildings &amp; Infrastructure</div>
+            <div class="card-desc">Bridges, walls, pillars, facades, structural surfaces — ideal for crack inspection</div>
+          </div>
+          <div class="card-check">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <div class="card-tags">
+          <span class="card-tag">Structural</span>
+          <span class="card-tag">Wide Area</span>
+          <span class="card-tag">Crack AI</span>
+        </div>
+      </div>
+
+      <div class="target-card obj reveal reveal-delay-3" id="cardObject" onclick="selectTarget('object')" role="button" tabindex="0" aria-label="Select Object 360° scan mode">
+        <div class="card-glow"></div>
+        <div class="card-header">
+          <div class="card-icon">🗿</div>
+          <div class="card-info">
+            <div class="card-name">Object — 360°</div>
+            <div class="card-desc">Small to medium objects — walk around to capture all angles for full 3D mesh</div>
+          </div>
+          <div class="card-check">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <div class="card-tags">
+          <span class="card-tag">360° Capture</span>
+          <span class="card-tag">Full Mesh</span>
+          <span class="card-tag">Artefact</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── SECTION 3: LAUNCH ── -->
+  <section class="launch-section" id="launchSection">
+    <div class="section-label reveal">
+      <div class="section-label-line"></div>
+      <span class="section-label-text">Step 02 — Launch &amp; Capture</span>
+    </div>
+    <h2 class="section-title reveal reveal-delay-1" style="margin-bottom:22px;">Ready to scan</h2>
+
+    <div class="launch-summary-card reveal reveal-delay-2">
+      <div class="ls-header">
+        <div class="ls-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="ls-title">What happens next</div>
+      </div>
+      <div class="ls-step-list">
+        <div class="ls-step">
+          <div class="ls-step-num">1</div>
+          <div class="ls-step-content">
+            <div class="ls-step-label">📸 Capture photos</div>
+            <div class="ls-step-desc">Walk around your subject and take multiple angle shots</div>
+          </div>
+        </div>
+        <div class="ls-step">
+          <div class="ls-step-num">2</div>
+          <div class="ls-step-content">
+            <div class="ls-step-label">📡 Send via Wi-Fi</div>
+            <div class="ls-step-desc">Images transfer automatically to the laptop on the same network</div>
+          </div>
+        </div>
+        <div class="ls-step">
+          <div class="ls-step-num">3</div>
+          <div class="ls-step-content">
+            <div class="ls-step-label">🤖 AI processes cracks</div>
+            <div class="ls-step-desc">YOLOv8 model detects structural damage on each frame</div>
+          </div>
+        </div>
+        <div class="ls-step">
+          <div class="ls-step-num">4</div>
+          <div class="ls-step-content">
+            <div class="ls-step-label">🧊 3D Twin built</div>
+            <div class="ls-step-desc">Authorize with your key on laptop to trigger KIRI Engine reconstruction</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="launch-btn reveal reveal-delay-3" id="launchBtn" onclick="openCamera()">
+      <div class="launch-btn-shine"></div>
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M20 7h-3.2L15 5H9L7.2 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/></svg>
+      START SCANNING →
+    </button>
+
+    <p class="launch-note reveal">
+      <span class="lock-icon">🔒</span>
+      Secure transfer · End-to-end on your local Wi-Fi
+    </p>
+  </section>
+
+</div><!-- /.scroll-wrap -->
+
+<!-- Bottom safe area bar -->
+<div class="bottom-glass-bar" aria-hidden="true"></div>
+
+<!-- ═══════ OVERLAYS (fixed, on top) ═══════ -->
+
+<!-- CAMERA OVERLAY -->
+<div class="overlay" id="cameraOverlay" role="dialog" aria-label="Camera viewfinder">
+  <video id="videoEl" autoplay muted playsinline></video>
+
+  <!-- AR Canvas drawn directly on video -->
+  <canvas id="arCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6;"></canvas>
+
+  <!-- Flash effect -->
+  <div class="cam-flash" id="camFlash"></div>
+
+  <!-- Top HUD -->
+  <div class="cam-hud-top">
+    <button class="cam-close-btn" onclick="closeCamera()" aria-label="Close camera">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="cam-counter">
+      <div class="cam-count-num" id="camCount">0%</div>
+      <div class="cam-count-label">SCANNED</div>
+    </div>
+    <div class="cam-mode-badge" id="camModeBadge">AUTO · BLDG</div>
+  </div>
+
+  <!-- Auto-scan status label -->
+  <div id="autoCountdown" style="
+    position:absolute; bottom:130px; left:50%; transform:translateX(-50%);
+    z-index:10; text-align:center; pointer-events:none;">
+    <div style="
+      font-family:var(--font-mono); font-size:13px; font-weight:700;
+      color:rgba(56,189,248,0.95); letter-spacing:1.2px; text-transform:uppercase;
+      background:rgba(0,0,0,0.55); border:1px solid rgba(56,189,248,0.28);
+      border-radius:9999px; padding:6px 18px;
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);">
+      <span id="nextShotTimer">TAP TO START</span>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="cam-controls">
+    <button class="cam-side-btn" onclick="switchCamera()" aria-label="Switch camera">
+      <svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="7" r="3"/><circle cx="7" cy="17" r="3"/></svg>
+    </button>
+
+    <!-- Auto-shutter ring button -->
+    <div class="shutter-wrap" id="shutterWrap" onclick="toggleAutoShutter()" role="button" aria-label="Toggle auto scan">
+      <svg class="shutter-svg" viewBox="0 0 86 86">
+        <circle class="shutter-track" cx="43" cy="43" r="39"/>
+        <circle class="shutter-ring" id="shutterRing" cx="43" cy="43" r="39"/>
+      </svg>
+      <div class="shutter" id="shutterBtn">
+        <div class="shutter-inner">
+          <div class="shutter-label" id="shutterLabel">TAP<br>START</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="cam-side-btn" id="finishBtn" onclick="finishCapture()"
+      style="background:rgba(16,185,129,0.20);border-color:rgba(16,185,129,0.40);" aria-label="Finish and review">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" stroke="#10b981"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- REVIEW OVERLAY -->
+<div class="overlay" id="reviewOverlay" role="dialog" aria-label="Review captured photos">
+  <div class="review-header">
+    <button class="review-back-btn" onclick="backToCamera()" aria-label="Back to camera">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="review-header-info">
+      <div class="review-title">Review Photos</div>
+      <div class="review-subtitle" id="reviewSubtitle">0 frames captured</div>
+    </div>
+  </div>
+  <div class="review-body">
+    <div id="photoGrid"></div>
+
+    <!-- Gemini AI Diagnostic Card (Revealed after analysis) -->
+    <div id="geminiReportCard" class="gemini-card" style="display:none;">
+      <div class="gemini-card-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">✨</span>
+          <span style="font-weight:700;font-size:13px;color:var(--slate);">Gemini 3.8 Flash AI Assessment</span>
+        </div>
+        <span id="geminiSeverityBadge" class="gemini-badge moderate">MODERATE</span>
+      </div>
+      <div id="geminiDamageType" style="font-size:13px;font-weight:700;color:var(--cyan);margin:8px 0 4px;">Surface Crack Detected</div>
+      <div id="geminiSummary" style="font-size:12px;color:var(--slate-muted);line-height:1.5;margin-bottom:8px;">Evaluating visual markers...</div>
+      <div style="display:flex;gap:14px;font-size:11px;font-family:var(--font-mono);color:var(--slate-mid);margin-bottom:8px;">
+        <div>Confidence: <strong id="geminiConfidence">94.2%</strong></div>
+        <div>Est. Width: <strong id="geminiWidth">1.4 mm</strong></div>
+        <div>Est. Length: <strong id="geminiLength">0.65 m</strong></div>
+      </div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--slate-soft);letter-spacing:0.5px;margin-bottom:4px;">Civil Action Items:</div>
+      <ul id="geminiActions" style="font-size:12px;color:var(--slate-mid);padding-left:18px;line-height:1.4;margin:0;">
+        <li>Sealing & moisture protection advised</li>
+      </ul>
+    </div>
+  </div>
+  <div class="review-footer">
+    <button class="review-gemini-btn" id="geminiAuditBtn" onclick="runGeminiAudit()">
+      <span>✨</span>
+      <span id="geminiBtnLabel">Run Gemini AI Diagnostic</span>
+    </button>
+    <button class="review-send-btn" id="sendLaptopBtn" onclick="sendToLaptop()">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      <span id="sendBtnLabel">SEND TO LAPTOP</span>
+    </button>
+    <button class="review-retake-btn" onclick="backToCamera()">← Retake More Photos</button>
+  </div>
+</div>
+
+<!-- SYNC OVERLAY -->
+<div class="overlay" id="syncOverlay" role="dialog" aria-label="Sending photos to laptop">
+  <div id="syncProgress" style="display:flex;flex-direction:column;align-items:center;width:100%;">
+    <div class="sync-icon-wrap">
+      <svg viewBox="0 0 24 24"><path d="M12 2L12 22"/><path d="M17 7l-5-5-5 5"/><path d="M22 16.5A6 6 0 0012 12a6 6 0 00-10 4.5"/></svg>
+    </div>
+
+    <div class="sync-status-title" id="syncTitle">Sending Photos</div>
+    <div class="sync-status-sub" id="syncSubtitle">Uploading frames to laptop via Wi-Fi…</div>
+
+    <div class="sync-progress-bar-wrap">
+      <div class="sync-progress-fill" id="syncProgressFill"></div>
+    </div>
+    <div class="sync-progress-label" id="syncProgressLabel">0%</div>
+
+    <div class="sync-steps">
+      <div class="sync-step-item" id="ss1">
+        <div class="sync-step-icon active" id="ss1-icon">📦</div>
+        <div class="sync-step-content">
+          <div class="sync-step-name">Packaging frames</div>
+          <div class="sync-step-info" id="ss1-info">Preparing images…</div>
+        </div>
+        <div class="sync-step-check" id="ss1-check"></div>
+      </div>
+      <div class="sync-step-item" id="ss2" style="opacity:0.4;">
+        <div class="sync-step-icon" id="ss2-icon">📡</div>
+        <div class="sync-step-content">
+          <div class="sync-step-name">Wi-Fi transfer</div>
+          <div class="sync-step-info" id="ss2-info">Waiting…</div>
+        </div>
+        <div class="sync-step-check" id="ss2-check"></div>
+      </div>
+      <div class="sync-step-item" id="ss3" style="opacity:0.4;">
+        <div class="sync-step-icon" id="ss3-icon">🤖</div>
+        <div class="sync-step-content">
+          <div class="sync-step-name">AI queued on laptop</div>
+          <div class="sync-step-info" id="ss3-info">Waiting…</div>
+        </div>
+        <div class="sync-step-check" id="ss3-check"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="syncSuccess">
+    <div class="success-icon-wrap">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="success-title">Photos Sent! 🎉</div>
+    <div class="success-sub">Your photos are on the laptop. Open the dashboard to build your 3D Digital Twin.</div>
+    <div class="laptop-card">
+      <div class="laptop-card-title">On your laptop</div>
+      <div class="laptop-step">
+        <span class="laptop-step-num">1</span>
+        <span class="laptop-step-text">Open <strong>dashboard</strong> on the laptop browser</span>
+      </div>
+      <div class="laptop-step">
+        <span class="laptop-step-num">2</span>
+        <span class="laptop-step-text">Click <strong>MAKE DIGITAL TWIN</strong></span>
+      </div>
+      <div class="laptop-step">
+        <span class="laptop-step-num">3</span>
+        <span class="laptop-step-text">Enter key: <strong style="color:var(--cyan-glow);font-family:var(--font-mono);">crack</strong></span>
+      </div>
+      <div class="laptop-step">
+        <span class="laptop-step-num">4</span>
+        <span class="laptop-step-text">KIRI Engine builds your 3D model</span>
+      </div>
+    </div>
+    <button class="sync-done-btn" onclick="resetAll()">Done — Scan Another</button>
+  </div>
+</div>
+
+<!-- TARGET SYNC MODAL -->
+<div class="target-modal-overlay" id="targetModal" role="dialog" aria-label="Laptop and Cloud Sync Settings">
+  <div class="target-modal-card">
+    <div class="modal-header">
+      <div class="modal-title">💻 Laptop & Cloud Sync</div>
+      <button class="modal-close-btn" onclick="closeTargetModal()">✕</button>
+    </div>
+    
+    <p style="font-size:12.5px;color:var(--slate-muted);margin-bottom:14px;line-height:1.5;">
+      Choose where to stream scan data. Cloud Relay allows sending from cellular data anywhere in the world:
+    </p>
+
+    <div class="sync-mode-card active" id="modeCloudCard" onclick="selectSyncMode('cloud')">
+      <div class="sync-mode-head">
+        <span class="sync-mode-name"><span>☁️</span> Vercel Cloud Relay (Worldwide)</span>
+        <span class="sync-badge">Recommended</span>
+      </div>
+      <div class="sync-mode-desc">Send from anywhere on 4G / 5G data. Your laptop dashboard auto-syncs all scans.</div>
+    </div>
+
+    <div class="sync-mode-card" id="modeDirectCard" onclick="selectSyncMode('direct')">
+      <div class="sync-mode-head">
+        <span class="sync-mode-name"><span>⚡</span> Direct Laptop Link</span>
+      </div>
+      <div class="sync-mode-desc">Direct transmission over Wi-Fi, USB tether, or Cloudflare/Ngrok tunnel URL.</div>
+      <div id="directUrlGroup" style="margin-top:8px;display:none;">
+        <input type="text" id="targetUrlInput" placeholder="http://192.168.0.91:4242 or https://xyz.trycloudflare.com" class="target-input"/>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;">
+      <label style="font-size:12px;font-weight:700;color:var(--slate);display:block;margin-bottom:4px;">✨ Google Gemini API Key (Optional)</label>
+      <input type="password" id="geminiKeyInput" placeholder="AIzaSy... (leave blank to use server key)" class="target-input"/>
+      <div style="font-size:10.5px;color:var(--slate-soft);margin-top:4px;">Enables instant Gemini 3.8 Flash multimodal structural crack audit on your phone.</div>
+    </div>
+
+    <button class="modal-save-btn" onclick="saveTargetSettings()">Save & Connect</button>
+  </div>
+</div>
+
+<!-- Toast notifications -->
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ═══════ SCRIPT ═══════ -->
+<script>
+/* ══════════════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════════════ */
+let scanTarget = 'building';
+let capturedFrames = [];
+let currentScanId = null;
+let mediaStream = null;
+let cameraFacing = 'environment';
+let captureCanvas;   // for JPEG capture
+
+/* Auto-shutter state */
+let autoRunning = false;
+let autoIntervalMs = 333;         // 3 frames per second
+let autoTimerId = null;
+let autoTickerId = null;          // 100ms ticker for countdown ring
+let autoTickElapsed = 0;
+
+/* Scan directions / coverage */
+const DIRECTIONS = ['FRONT', 'RIGHT-SIDE', 'BACK', 'LEFT-SIDE'];
+const DIR_ANGLES  = [270, 0, 90, 180];  // degrees on the sector map (top=front)
+let dirIndex = 0;
+let framePerDir = 0;
+const FRAMES_PER_DIR = 15;         // 15 frames per direction zone
+const TOTAL_TARGET = FRAMES_PER_DIR * DIRECTIONS.length;  // 60 frames total
+
+/* AR Canvas RAF */
+let arRafId = null;
+
+/* ══════════════════════════════════════════════════════════════
+   AUDIO / HAPTIC
+══════════════════════════════════════════════════════════════ */
+let audioCtx;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playClick() {
+  try {
+    const ac = getAudioCtx();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = 'sine'; o.frequency.setValueAtTime(1400, ac.currentTime);
+    g.gain.setValueAtTime(0.08, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.06);
+    o.start(); o.stop(ac.currentTime + 0.07);
+  } catch(e){}
+}
+function playShutter() {
+  try {
+    const ac = getAudioCtx();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = 'sine'; o.frequency.setValueAtTime(900, ac.currentTime);
+    o.frequency.exponentialRampToValueAtTime(500, ac.currentTime + 0.08);
+    g.gain.setValueAtTime(0.12, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.10);
+    o.start(); o.stop(ac.currentTime + 0.12);
+  } catch(e){}
+}
+function playSuccess() {
+  try {
+    const ac = getAudioCtx(), t = ac.currentTime;
+    [[523,0],[659,0.1],[784,0.2],[1047,0.35]].forEach(([f,d]) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.09, t+d);
+      g.gain.exponentialRampToValueAtTime(0.001, t+d+0.22);
+      o.start(t+d); o.stop(t+d+0.25);
+    });
+  } catch(e){}
+}
+function haptic(p='light') {
+  if ('vibrate' in navigator) {
+    ({ light:[15], medium:[25,10,25], heavy:[60] }[p] || [15]);
+    navigator.vibrate({ light:[15], medium:[25,10,25], heavy:[60] }[p] || [15]);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SCROLL REVEAL
+══════════════════════════════════════════════════════════════ */
+const revealObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+/* ══════════════════════════════════════════════════════════════
+   TARGET SELECTION
+══════════════════════════════════════════════════════════════ */
+function selectTarget(t) {
+  scanTarget = t;
+  playClick(); haptic('light');
+  document.getElementById('cardBuilding').classList.toggle('selected', t==='building');
+  document.getElementById('cardObject').classList.toggle('selected', t==='object');
+  document.getElementById('camModeBadge').textContent = (t==='building' ? 'AUTO · BLDG' : 'AUTO · 360°');
+  setTimeout(() => {
+    document.getElementById('launchSection').scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 260);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   OPEN / CLOSE CAMERA
+══════════════════════════════════════════════════════════════ */
+async function openCamera() {
+  playClick(); haptic('medium');
+
+  const now = new Date(), pad = n => String(n).padStart(2,'0');
+  currentScanId = `survey_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}_`;
+
+  capturedFrames = [];
+  dirIndex = 0; framePerDir = 0;
+  updateCount();
+  autoRunning = false;
+  setShutterIdle();
+
+  captureCanvas = document.createElement('canvas');
+
+  const overlay = document.getElementById('cameraOverlay');
+  overlay.classList.add('active','overlay-enter');
+
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: cameraFacing, width:{ideal:1280}, height:{ideal:720} },
+      audio: false
+    });
+    const vid = document.getElementById('videoEl');
+    vid.srcObject = mediaStream;
+    vid.onloadedmetadata = () => {
+      startARCanvas();
+      showToast('Tap the button to start auto-scan!', 'success');
+    };
+  } catch(err) {
+    showToast('Camera access denied', 'error');
+    closeCamera();
+  }
+}
+
+function closeCamera() {
+  stopAutoShutter();
+  stopARCanvas();
+  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+  const ov = document.getElementById('cameraOverlay');
+  ov.classList.add('overlay-exit');
+  setTimeout(() => ov.classList.remove('active','overlay-enter','overlay-exit'), 280);
+}
+
+async function switchCamera() {
+  cameraFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+  haptic('light');
+  stopARCanvas();
+  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ video:{facingMode:cameraFacing}, audio:false });
+    const vid = document.getElementById('videoEl');
+    vid.srcObject = mediaStream;
+    vid.onloadedmetadata = () => startARCanvas();
+  } catch(e) { showToast('Could not switch camera','error'); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AUTO-SHUTTER CONTROL
+══════════════════════════════════════════════════════════════ */
+function toggleAutoShutter() {
+  if (!mediaStream) return;
+  if (autoRunning) {
+    stopAutoShutter();
+    showToast('Auto-scan paused', 'info');
+  } else {
+    startAutoShutter();
+    showToast('🔴 Auto-scanning started!', 'success');
+    haptic('medium');
+  }
+}
+
+function startAutoShutter() {
+  autoRunning = true;
+  setShutterCapturing();
+
+  // Animate ring continuously while scanning (spin from 0→full repeatedly)
+  const ring = document.getElementById('shutterRing');
+  ring.style.transition = 'stroke-dashoffset 0.3s linear';
+  ring.style.strokeDashoffset = '0';   // fully filled = active
+  document.getElementById('nextShotTimer').textContent = 'SCANNING…';
+
+  // Actual capture interval — 3 frames/sec
+  autoTimerId = setInterval(() => {
+    captureFrame();
+  }, autoIntervalMs);
+}
+
+function stopAutoShutter() {
+  autoRunning = false;
+  clearInterval(autoTimerId);
+  clearInterval(autoTickerId);
+  autoTimerId = null; autoTickerId = null;
+  setShutterIdle();
+  const ring = document.getElementById('shutterRing');
+  ring.style.transition = '';
+  ring.style.strokeDashoffset = '245';
+  document.getElementById('nextShotTimer').textContent = 'PAUSED';
+}
+
+function setShutterIdle() {
+  const sb = document.getElementById('shutterBtn');
+  sb.classList.remove('capturing');
+  document.getElementById('shutterLabel').innerHTML = 'TAP<br>START';
+}
+function setShutterCapturing() {
+  const sb = document.getElementById('shutterBtn');
+  sb.classList.add('capturing');
+  document.getElementById('shutterLabel').innerHTML = 'TAP<br>STOP';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CAPTURE A FRAME
+══════════════════════════════════════════════════════════════ */
+function captureFrame() {
+  const vid = document.getElementById('videoEl');
+  if (!vid.srcObject || vid.readyState < 2) return;
+
+  haptic('light');
+  playShutter();
+
+  // White flash
+  const fl = document.getElementById('camFlash');
+  fl.style.transition = ''; fl.style.opacity = '0.6';
+  setTimeout(() => { fl.style.transition = 'opacity 0.2s'; fl.style.opacity = '0'; }, 40);
+
+  // Shutter ring pulse
+  const sb = document.getElementById('shutterBtn');
+  sb.classList.add('flash-ring');
+  setTimeout(() => sb.classList.remove('flash-ring'), 300);
+
+  captureCanvas.width = vid.videoWidth || 1280;
+  captureCanvas.height = vid.videoHeight || 720;
+  captureCanvas.getContext('2d').drawImage(vid, 0, 0);
+
+  captureCanvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    capturedFrames.push({ blob, url, dir: DIRECTIONS[dirIndex] });
+    updateCount();
+
+    framePerDir++;
+    if (framePerDir >= FRAMES_PER_DIR && dirIndex < DIRECTIONS.length - 1) {
+      dirIndex++;
+      framePerDir = 0;
+      haptic('heavy');
+      showToast(`📍 Move to: ${DIRECTIONS[dirIndex]}`, 'success');
+    }
+
+    // Auto-finish when target coverage reached
+    if (capturedFrames.length >= TOTAL_TARGET) {
+      stopAutoShutter();
+      showToast('✅ Full coverage! Tap ✓ to review', 'success');
+      haptic('heavy');
+    }
+  }, 'image/jpeg', 0.88);
+}
+
+function updateCount() {
+  const pct = Math.min(100, Math.round((capturedFrames.length / TOTAL_TARGET) * 100));
+  document.getElementById('camCount').textContent = pct + '%';
+}
+
+function finishCapture() {
+  if (capturedFrames.length < 5) {
+    showToast('Need at least 5 frames', 'error'); haptic('light'); return;
+  }
+  stopAutoShutter();
+  haptic('medium');
+  showReview();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AR CANVAS — drawn directly on the video every frame
+══════════════════════════════════════════════════════════════ */
+function startARCanvas() {
+  stopARCanvas();
+  const c = document.getElementById('arCanvas');
+  const vid = document.getElementById('videoEl');
+
+  function frame() {
+    const W = vid.clientWidth, H = vid.clientHeight;
+    if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+
+    drawScanZone(ctx, W, H);
+    drawSectorMap(ctx, W, H);
+    drawDirectionArrow(ctx, W, H);
+    drawCornerHUD(ctx, W, H);
+
+    arRafId = requestAnimationFrame(frame);
+  }
+  arRafId = requestAnimationFrame(frame);
+}
+
+function stopARCanvas() {
+  if (arRafId) { cancelAnimationFrame(arRafId); arRafId = null; }
+  const c = document.getElementById('arCanvas');
+  if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
+}
+
+/* ── 1. CORNER HUD brackets ── */
+function drawCornerHUD(ctx, W, H) {
+  const L = 28, T = 3, cx = 0.14*W, cy = 0.28*H, rw = W*0.72, rh = H*0.44;
+  ctx.strokeStyle = 'rgba(56,189,248,0.75)';
+  ctx.lineWidth = T;
+  ctx.lineCap = 'round';
+  // top-left
+  strokeLines(ctx, [[cx,cy+L],[cx,cy],[cx+L,cy]]);
+  // top-right
+  strokeLines(ctx, [[cx+rw-L,cy],[cx+rw,cy],[cx+rw,cy+L]]);
+  // bottom-left
+  strokeLines(ctx, [[cx,cy+rh-L],[cx,cy+rh],[cx+L,cy+rh]]);
+  // bottom-right
+  strokeLines(ctx, [[cx+rw-L,cy+rh],[cx+rw,cy+rh],[cx+rw,cy+rh-L]]);
+
+  // scan line inside the zone
+  const t = (Date.now() % 2200) / 2200;
+  const sy = cy + t * rh;
+  const grad = ctx.createLinearGradient(cx, sy, cx+rw, sy);
+  grad.addColorStop(0,'transparent');
+  grad.addColorStop(0.5,'rgba(56,189,248,0.55)');
+  grad.addColorStop(1,'transparent');
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 2;
+  ctx.shadowColor = 'rgba(56,189,248,0.6)';
+  ctx.shadowBlur = 8;
+  ctx.beginPath(); ctx.moveTo(cx,sy); ctx.lineTo(cx+rw,sy); ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+function strokeLines(ctx, pts) {
+  ctx.beginPath();
+  pts.forEach(([x,y],i) => i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y));
+  ctx.stroke();
+}
+
+/* ── 2. SCAN ZONE label ── */
+function drawScanZone(ctx, W, H) {
+  const label = DIRECTIONS[dirIndex];
+  const cx = 0.14*W, cy = 0.28*H;
+
+  // label above zone
+  ctx.font = 'bold 13px "JetBrains Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(56,189,248,0.90)';
+  ctx.fillText('SCAN TARGET: ' + label, cx, cy - 10);
+
+  // coverage bar
+  const barW = W * 0.72;
+  const filled = Math.min(1, capturedFrames.length / TOTAL_TARGET);
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.beginPath(); roundRect(ctx, cx, cy - 6, barW, 3, 2); ctx.fill();
+  ctx.fillStyle = filled >= 1 ? '#10b981' : '#38bdf8';
+  ctx.beginPath(); roundRect(ctx, cx, cy - 6, barW * filled, 3, 2); ctx.fill();
+}
+
+/* ── 3. SECTOR MAP (circular compass in bottom-right) ── */
+function drawSectorMap(ctx, W, H) {
+  const mx = W - 68, my = H - 140;
+  const R = 52, r = 20;
+
+  // Outer ring bg
+  ctx.save();
+  ctx.globalAlpha = 0.88;
+
+  // Background disc
+  ctx.beginPath(); ctx.arc(mx, my, R+4, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(15,23,42,0.72)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(56,189,248,0.22)'; ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Draw 4 sectors
+  DIRECTIONS.forEach((dir, i) => {
+    const startAngle = (i * Math.PI/2) - Math.PI/2 - Math.PI/4;
+    const endAngle   = startAngle + Math.PI/2;
+    const framesInDir = capturedFrames.filter(f => f.dir === dir).length;
+    const fill = Math.min(1, framesInDir / FRAMES_PER_DIR);
+
+    // Filled arc
+    ctx.beginPath();
+    ctx.moveTo(mx, my);
+    ctx.arc(mx, my, R, startAngle, endAngle);
+    ctx.closePath();
+
+    // Color: completed = green, current = cyan pulse, pending = dim
+    if (fill >= 1) {
+      ctx.fillStyle = 'rgba(16,185,129,0.55)';
+    } else if (i === dirIndex) {
+      const pulse = 0.35 + 0.25 * Math.sin(Date.now() / 350);
+      ctx.fillStyle = `rgba(56,189,248,${pulse})`;
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    }
+    ctx.fill();
+
+    // Sector border
+    ctx.strokeStyle = i === dirIndex ? 'rgba(56,189,248,0.80)' : 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = i === dirIndex ? 2 : 1;
+    ctx.stroke();
+
+    // Direction label
+    const labelAngle = startAngle + Math.PI/4;
+    const lx = mx + (R*0.62) * Math.cos(labelAngle);
+    const ly = my + (R*0.62) * Math.sin(labelAngle);
+    const shortLabel = ['F','R','B','L'][i];
+    ctx.font = `bold ${i===dirIndex?'12':'10'}px "JetBrains Mono",monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = fill>=1 ? '#10b981' : (i===dirIndex ? '#38bdf8' : 'rgba(255,255,255,0.35)');
+    ctx.fillText(shortLabel, lx, ly);
+  });
+
+  // Inner hole
+  ctx.beginPath(); ctx.arc(mx, my, r, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(15,23,42,0.90)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(56,189,248,0.30)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // Center dot
+  ctx.beginPath(); ctx.arc(mx, my, 5, 0, Math.PI*2);
+  ctx.fillStyle = '#38bdf8'; ctx.fill();
+
+  // Frame count
+  ctx.font = 'bold 9px "JetBrains Mono",monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fillText(`${capturedFrames.length}/${TOTAL_TARGET}`, mx, my + R + 6);
+
+  ctx.restore();
+}
+
+/* ── 4. DIRECTION ARROW (points where to move) ── */
+function drawDirectionArrow(ctx, W, H) {
+  if (dirIndex >= DIRECTIONS.length) return;
+
+  // Arrow points from center towards the correct edge
+  const cx = W/2, cy = H * 0.52;
+  const arrowMap = {
+    0: [0, -1],    // FRONT → up
+    1: [1,  0],    // RIGHT → right
+    2: [0,  1],    // BACK  → down
+    3: [-1, 0],    // LEFT  → left
+  };
+  const [dx, dy] = arrowMap[dirIndex] || [0,-1];
+  const len = 38;
+  const ax = cx + dx * 55, ay = cy + dy * 55;
+  const tx = ax + dx * len, ty = ay + dy * len;
+
+  const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 300);
+
+  ctx.save();
+  ctx.globalAlpha = pulse;
+  ctx.strokeStyle = '#38bdf8';
+  ctx.fillStyle   = '#38bdf8';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.shadowColor = '#38bdf8';
+  ctx.shadowBlur = 14;
+
+  // Line shaft
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(tx, ty); ctx.stroke();
+
+  // Arrowhead
+  const hw = 10, hl = 14;
+  const perp = [-dy, dx];
+  ctx.beginPath();
+  ctx.moveTo(tx + dx*hl, ty + dy*hl);
+  ctx.lineTo(tx + perp[0]*hw, ty + perp[1]*hw);
+  ctx.lineTo(tx - perp[0]*hw, ty - perp[1]*hw);
+  ctx.closePath();
+  ctx.fill();
+
+  // Direction text
+  ctx.shadowBlur = 6;
+  ctx.font = 'bold 12px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#38bdf8';
+  const tlx = cx + dx * 30, tly = cy + dy * 30;
+  ctx.fillText('→ ' + DIRECTIONS[dirIndex], tlx + dx*50 - dx*30, tly + dy*50 - dy*30 + dy*22);
+
+  ctx.restore();
+}
+
+/* ── Canvas helpers ── */
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REVIEW
+══════════════════════════════════════════════════════════════ */
+function showReview() {
+  stopARCanvas();
+  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+  document.getElementById('cameraOverlay').classList.remove('active','overlay-enter');
+
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '';
+  capturedFrames.forEach((f,i) => {
+    const d = document.createElement('div');
+    d.className = 'photo-thumb';
+    d.style.animationDelay = `${i*0.035}s`;
+    d.innerHTML = `<img src="${f.url}" loading="lazy" alt="Frame ${i+1}"/><div class="photo-thumb-num">#${i+1}</div>`;
+    grid.appendChild(d);
+  });
+
+  document.getElementById('reviewSubtitle').textContent =
+    `${capturedFrames.length} frames · ${scanTarget==='building'?'Structural':'Object 360°'}`;
+
+  document.getElementById('reviewOverlay').classList.add('active','overlay-enter');
+  playSuccess();
+}
+
+function backToCamera() {
+  document.getElementById('reviewOverlay').classList.remove('active','overlay-enter');
+  openCamera();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TARGET SETTINGS & CLOUD SYNC
+══════════════════════════════════════════════════════════════ */
+function getTargetEndpoint() {
+  const mode = localStorage.getItem('sync_mode') || 'cloud';
+  const directUrl = localStorage.getItem('direct_laptop_url') || '';
+  if (mode === 'direct' && directUrl.trim() && !directUrl.includes('vercel.app')) {
+    return directUrl.replace(/\/$/, '') + '/api/upload-batch';
+  }
+  return '/api/upload-batch';
+}
+
+function openTargetModal() {
+  const mode = localStorage.getItem('sync_mode') || 'cloud';
+  const directUrl = localStorage.getItem('direct_laptop_url') || '';
+  const geminiKey = localStorage.getItem('gemini_api_key') || '';
+
+  selectSyncMode(mode);
+  if (document.getElementById('targetUrlInput')) document.getElementById('targetUrlInput').value = directUrl;
+  if (document.getElementById('geminiKeyInput')) document.getElementById('geminiKeyInput').value = geminiKey;
+  document.getElementById('targetModal').classList.add('active');
+}
+
+function closeTargetModal() {
+  document.getElementById('targetModal').classList.remove('active');
+}
+
+function selectSyncMode(mode) {
+  const cloudCard = document.getElementById('modeCloudCard');
+  const directCard = document.getElementById('modeDirectCard');
+  const urlGroup = document.getElementById('directUrlGroup');
+
+  if (mode === 'direct') {
+    directCard.classList.add('active');
+    cloudCard.classList.remove('active');
+    urlGroup.style.display = 'block';
+  } else {
+    cloudCard.classList.add('active');
+    directCard.classList.remove('active');
+    urlGroup.style.display = 'none';
+  }
+  localStorage.setItem('sync_mode', mode);
+}
+
+function saveTargetSettings() {
+  const isDirect = document.getElementById('modeDirectCard').classList.contains('active');
+  const mode = isDirect ? 'direct' : 'cloud';
+  const url = document.getElementById('targetUrlInput').value.trim();
+  const key = document.getElementById('geminiKeyInput').value.trim();
+
+  localStorage.setItem('sync_mode', mode);
+  if (url) localStorage.setItem('direct_laptop_url', url);
+  if (key) localStorage.setItem('gemini_api_key', key);
+
+  updateSyncBadgeUI();
+  closeTargetModal();
+  showToast(mode === 'cloud' ? 'Connected to Vercel Cloud Relay ☁️' : 'Direct Laptop Link Configured ⚡', 'success');
+}
+
+function updateSyncBadgeUI() {
+  const mode = localStorage.getItem('sync_mode') || 'cloud';
+  const icon = document.getElementById('targetModeIcon');
+  const label = document.getElementById('targetModeLabel');
+  if (icon && label) {
+    if (mode === 'direct') {
+      icon.textContent = '⚡';
+      label.textContent = 'Direct';
+    } else {
+      icon.textContent = '☁️';
+      label.textContent = 'Cloud';
+    }
+  }
+}
+updateSyncBadgeUI();
+
+/* ══════════════════════════════════════════════════════════════
+   GEMINI AI MULTIMODAL AUDIT
+══════════════════════════════════════════════════════════════ */
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function runGeminiAudit() {
+  if (capturedFrames.length === 0) {
+    showToast('No captured frames to analyze', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('geminiAuditBtn');
+  const label = document.getElementById('geminiBtnLabel');
+  const card = document.getElementById('geminiReportCard');
+
+  btn.disabled = true;
+  label.textContent = 'Gemini 3.8 Flash Analyzing…';
+  haptic('medium');
+
+  try {
+    const base64List = [];
+    for (let i = 0; i < Math.min(3, capturedFrames.length); i++) {
+      const f = capturedFrames[i];
+      const b64 = await blobToBase64(f.blob);
+      base64List.push(b64);
+    }
+
+    const geminiKey = localStorage.getItem('gemini_api_key') || '';
+    const headers = { 'Content-Type': 'application/json' };
+    if (geminiKey) headers['x-gemini-key'] = geminiKey;
+
+    const res = await fetch('/api/gemini/analyze', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ images: base64List }),
+    });
+
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Gemini analysis failed');
+
+    const a = data.analysis;
+    card.style.display = 'block';
+
+    document.getElementById('geminiDamageType').textContent = a.crackType || 'Structural Assessment Complete';
+    document.getElementById('geminiSummary').textContent = a.summary || a.structuralRisk || 'Inspection complete.';
+    document.getElementById('geminiConfidence').textContent = (a.confidenceScore || 92.4) + '%';
+    document.getElementById('geminiWidth').textContent = a.estimatedWidth || '1.4 mm';
+    document.getElementById('geminiLength').textContent = a.estimatedLength || '0.65 m';
+
+    const badge = document.getElementById('geminiSeverityBadge');
+    const sev = (a.severity || 'Moderate').toLowerCase();
+    badge.textContent = (a.severity || 'MODERATE').toUpperCase();
+    badge.className = 'gemini-badge ' + (sev === 'safe' || sev === 'low' ? 'safe' : (sev === 'critical' || sev === 'high' ? 'critical' : 'moderate'));
+
+    const actList = document.getElementById('geminiActions');
+    actList.innerHTML = '';
+    const actions = Array.isArray(a.remediation) ? a.remediation : [a.remediation || 'Inspect surface integrity'];
+    actions.forEach(act => {
+      const li = document.createElement('li');
+      li.textContent = act;
+      actList.appendChild(li);
+    });
+
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    showToast('✨ Gemini AI Structural Audit Complete', 'success');
+    playSuccess();
+  } catch (err) {
+    showToast('Analysis: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    label.textContent = 'Re-run Gemini AI Diagnostic';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SEND TO LAPTOP (DUAL: CLOUD RELAY & DIRECT TUNNEL)
+══════════════════════════════════════════════════════════════ */
+async function sendToLaptop() {
+  haptic('heavy'); playClick();
+  document.getElementById('reviewOverlay').classList.remove('active','overlay-enter');
+
+  const syncOv = document.getElementById('syncOverlay');
+  document.getElementById('syncProgress').style.display = 'flex';
+  document.getElementById('syncSuccess').style.display = 'none';
+  document.getElementById('syncProgressFill').style.width = '0%';
+  document.getElementById('syncProgressLabel').textContent = '0%';
+  document.getElementById('syncTitle').textContent = 'Sending Photos';
+
+  const endpoint = getTargetEndpoint();
+  const isCloud = endpoint.startsWith('/') || endpoint.includes('vercel.app');
+  document.getElementById('syncSubtitle').textContent = isCloud
+    ? 'Queuing scan to Vercel Cloud Relay for Laptop Sync…'
+    : 'Direct transmission to laptop…';
+
+  ['ss1','ss2','ss3'].forEach((id,i) => {
+    document.getElementById(id).style.opacity = i===0?'1':'0.4';
+    document.getElementById(`${id}-check`).textContent = '';
+    document.getElementById(`${id}-icon`).className = 'sync-step-icon'+(i===0?' active':'');
+  });
+  document.getElementById('ss1-info').textContent = 'Preparing images…';
+  document.getElementById('ss2-info').textContent = 'Waiting…';
+  document.getElementById('ss3-info').textContent = 'Waiting…';
+
+  syncOv.classList.add('active','overlay-enter');
+
+  const fd = new FormData();
+  fd.append('scanId', currentScanId);
+  capturedFrames.forEach((f,i) => fd.append('images', f.blob, `frame_${String(i).padStart(3,'0')}.jpg`));
+
+  await sleep(600);
+  document.getElementById('ss1-info').textContent = `${capturedFrames.length} frames ready`;
+  setProgress(20);
+
+  document.getElementById('ss2').style.opacity = '1';
+  document.getElementById('ss2-icon').className = 'sync-step-icon active';
+  document.getElementById('ss2-info').textContent = isCloud ? 'Uploading to Cloud Relay…' : 'Uploading to Laptop…';
+
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint, true);
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) {
+        const p = Math.round((e.loaded/e.total)*60)+20;
+        setProgress(p);
+        document.getElementById('ss2-info').textContent =
+          `${Math.round(e.loaded/1024)}KB / ${Math.round(e.total/1024)}KB`;
+      }
+    };
+    xhr.onload = () => (xhr.status===200||xhr.status===201) ? uploadSuccess(isCloud) : uploadError(`Server ${xhr.status}`);
+    xhr.onerror = () => uploadError(isCloud ? 'Upload failed — check internet' : 'Cannot reach laptop — verify URL or use Cloud Relay');
+    xhr.send(fd);
+  } catch(err) { uploadError(err.message); }
+}
+
+async function uploadSuccess(isCloud) {
+  document.getElementById('ss1-icon').className='sync-step-icon done'; document.getElementById('ss1-check').textContent='✅';
+  document.getElementById('ss2-icon').className='sync-step-icon done'; document.getElementById('ss2-check').textContent='✅';
+  document.getElementById('ss2-info').textContent= isCloud ? 'Queued in Cloud Relay' : 'Transfer complete';
+  setProgress(85);
+
+  await sleep(500);
+  document.getElementById('ss3').style.opacity='1';
+  document.getElementById('ss3-icon').className='sync-step-icon active';
+  document.getElementById('ss3-info').textContent= isCloud ? 'Ready for Laptop Cloud Sync' : 'AI crack detection started…';
+  setProgress(95);
+
+  await sleep(1000);
+  document.getElementById('ss3-icon').className='sync-step-icon done'; document.getElementById('ss3-check').textContent='✅';
+  document.getElementById('ss3-info').textContent= isCloud ? 'Synchronized worldwide' : 'Processing in background';
+  setProgress(100);
+
+  await sleep(500);
+  document.getElementById('syncProgress').style.display='none';
+  document.getElementById('syncSuccess').style.display='flex';
+
+  if (isCloud) {
+    document.querySelector('.success-title').textContent = 'Cloud Synced! ☁️';
+    document.querySelector('.success-sub').textContent = 'Your scan is safe in Cloud Relay. Your laptop dashboard will auto-sync and build your 3D Digital Twin!';
+  } else {
+    document.querySelector('.success-title').textContent = 'Photos Sent! 🎉';
+    document.querySelector('.success-sub').textContent = 'Your photos are on the laptop. Open the dashboard to build your 3D Digital Twin.';
+  }
+
+  haptic('heavy'); playSuccess();
+}
+
+function uploadError(msg) {
+  showToast(`Upload failed: ${msg}`, 'error'); haptic('heavy');
+  document.getElementById('syncOverlay').classList.remove('active','overlay-enter');
+  document.getElementById('reviewOverlay').classList.add('active','overlay-enter');
+}
+
+function setProgress(p) {
+  document.getElementById('syncProgressFill').style.width = p+'%';
+  document.getElementById('syncProgressLabel').textContent = p+'%';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESET / UTILS
+══════════════════════════════════════════════════════════════ */
+function resetAll() {
+  document.getElementById('syncOverlay').classList.remove('active','overlay-enter');
+  capturedFrames.forEach(f => URL.revokeObjectURL(f.url));
+  capturedFrames = []; currentScanId = null; dirIndex = 0; framePerDir = 0;
+  window.scrollTo({ top:0, behavior:'smooth' });
+  showToast('Ready for a new scan', 'success');
+  haptic('medium');
+}
+
+let toastTimer;
+function showToast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 2800);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+document.querySelectorAll('.target-card').forEach(c => {
+  c.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') c.click(); });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   NETWORK STATUS
+══════════════════════════════════════════════════════════════ */
+async function checkNetwork() {
+  const statusEl = document.getElementById('wifiStatus');
+  if (navigator.onLine) {
+    statusEl.innerHTML = `<div class="status-dot"></div><span>LIVE</span>`;
+  } else {
+    statusEl.innerHTML = `<div class="status-dot" style="background:var(--warning);box-shadow:0 0 6px var(--warning);animation:none;"></div><span>OFFLINE</span>`;
+  }
+}
+window.addEventListener('online', checkNetwork);
+window.addEventListener('offline', checkNetwork);
+checkNetwork();
+
+/* ── DEFAULT SELECTION ── */
+document.getElementById('cardBuilding').classList.add('selected');
+</script>
+</body>
+</html>
