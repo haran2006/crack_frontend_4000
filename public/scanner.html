@@ -1638,7 +1638,7 @@ body {
       <div class="mobile-viewport-stage" id="mobViewerStage">
         <model-viewer
           id="mobile3dViewer"
-          src="/models/survey_20260929052124_.glb"
+          src="/models/model.glb"
           camera-controls
           touch-action="pan-y"
           auto-rotate
@@ -2770,16 +2770,16 @@ checkNetwork();
 ══════════════════════════════════════════════════════════════ */
 const DEFAULT_MOBILE_SCANS = [
   {
-    id: "survey_20260929052124_",
-    count: 45,
-    mb: "6.6 MB",
-    glbUrl: "/models/survey_20260929052124_.glb",
-    fallbackGlb: "/models/model.glb",
-    hasCrack: false,
-    cracksCount: 0,
-    crackType: "None (Nominal Surface)",
-    conf: "47.5%",
-    sector: "360° Survey"
+    id: "survey_structural_crack_demo",
+    count: 36,
+    mb: "3.47 MB",
+    glbUrl: "/models/model.glb",
+    fallbackGlb: "/scans-files/survey_structural_crack_demo/model.glb",
+    hasCrack: true,
+    cracksCount: 4,
+    crackType: "Shear & Longitudinal Crack (Critical)",
+    conf: "94.2%",
+    sector: "Front-Left Sector"
   },
   {
     id: "survey_20260929172842_",
@@ -2804,18 +2804,6 @@ const DEFAULT_MOBILE_SCANS = [
     crackType: "None (Nominal Surface)",
     conf: "50.8%",
     sector: "All Sectors"
-  },
-  {
-    id: "survey_structural_crack_demo",
-    count: 36,
-    mb: "2.4 MB",
-    glbUrl: "/models/survey_20260929172842_.glb",
-    fallbackGlb: "/models/model.glb",
-    hasCrack: true,
-    cracksCount: 2,
-    crackType: "Shear Crack (High Severity)",
-    conf: "94.2%",
-    sector: "Front-Left Sector"
   }
 ];
 
