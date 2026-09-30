@@ -2046,9 +2046,15 @@ body {
     </button>
 
     <button class="cam-side-btn" id="finishBtn" onclick="finishCapture()"
-      style="background:rgba(16,185,129,0.20);border-color:rgba(16,185,129,0.40);" aria-label="Finish and review">
+      style="background:rgba(16,185,129,0.20);border-color:rgba(16,185,129,0.40);" aria-label="Finish and review" title="Proceed to laptop">
       <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" stroke="#10b981"/></svg>
     </button>
+  </div>
+
+  <!-- Floating Proceed Pill (Triggered at 100+ images or whenever user wishes) -->
+  <div id="floatingProceedPill" onclick="finishCapture()"
+    style="display:none;position:absolute;bottom:102px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#10b981,#059669);color:#ffffff;font-family:var(--font-head);font-size:12.5px;font-weight:800;padding:8px 18px;border-radius:24px;box-shadow:0 0 25px rgba(16,185,129,0.7);cursor:pointer;z-index:25;align-items:center;gap:6px;letter-spacing:0.03em;border:1px solid rgba(255,255,255,0.3);white-space:nowrap;">
+    <span>✓</span> <span id="floatingProceedText">PROCEED TO LAPTOP (100 PHOTOS)</span>
   </div>
 </div>
 
@@ -2070,7 +2076,7 @@ body {
 <!-- REVIEW OVERLAY -->
 <div class="overlay" id="reviewOverlay" role="dialog" aria-label="Review captured photos">
   <div class="review-header">
-    <button class="review-back-btn" onclick="backToCamera()" aria-label="Back to camera">
+    <button class="review-back-btn" onclick="resumeCamera()" aria-label="Back to camera">
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <div class="review-header-info">
@@ -2112,7 +2118,7 @@ body {
       <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       <span id="sendBtnLabel">SEND TO LAPTOP</span>
     </button>
-    <button class="review-retake-btn" onclick="backToCamera()">← Retake More Photos</button>
+    <button class="review-retake-btn" onclick="resumeCamera()" style="border:1px solid #38bdf8;color:#38bdf8;background:rgba(56,189,248,0.12);font-weight:700;">+ ADD MORE PHOTOS (UP TO 250)</button>
   </div>
 </div>
 
@@ -2280,7 +2286,7 @@ const SCANNER_CONFIG = {
   ASSUMED_DIAG_FOV_DEG: 67,     // typical phone main camera; browsers do not expose real intrinsics
   CAPTURE_MIN_ROT_DEG: 10,      // auto-capture: min view change since last photo
   CAPTURE_MAX_SPEED_DEG_S: 25,  // auto-capture: must be steady
-  MAX_ACCEPTED_FRAMES: 220,
+  MAX_ACCEPTED_FRAMES: 250,
   // pitch band (degrees) that must be covered, per scan mode
   PITCH_BAND: { building: [-20, 60], object: [-60, 20] },
 };
@@ -3254,7 +3260,7 @@ function complete30sMapping() {
   const statusInd = document.getElementById('scanStatusIndicator');
   if (statusInd) {
     statusInd.className = 'scan-status-indicator active-scanning';
-    document.getElementById('scanStatusText').textContent = `📸 CAPTURING (${capturedFrames.length}/45)`;
+    document.getElementById('scanStatusText').textContent = `📸 CAPTURING (${capturedFrames.length}/${SCANNER_CONFIG.MAX_ACCEPTED_FRAMES})`;
   }
 
   const sb = document.getElementById('shutterBtn');
@@ -3291,7 +3297,7 @@ function captureSinglePhoto(reason = 'MANUAL') {
 
   const statusInd = document.getElementById('scanStatusIndicator');
   if (statusInd) {
-    document.getElementById('scanStatusText').textContent = `📸 CAPTURING (${capturedFrames.length}/45)`;
+    document.getElementById('scanStatusText').textContent = `📸 CAPTURING (${capturedFrames.length}/${SCANNER_CONFIG.MAX_ACCEPTED_FRAMES})`;
   }
 
   document.getElementById('nextShotTimer').textContent = `SCANNED #${capturedFrames.length} · TAP FOR NEXT`;
@@ -3448,26 +3454,79 @@ function captureFrame(reason, precomputedQuality) {
       showToast(`📸 ${capturedFrames.length} frames · coverage ${snap.coveragePct}%`, 'success');
     }
 
-    const snap = scanner.getHudSnapshot();
-    if (snap.coveragePct >= 95 && capturedFrames.length >= 20) {
-      stopAutoShutter();
-      showToast('✅ Strong coverage reached! Tap ✓ to review', 'success');
+    const maxFrames = SCANNER_CONFIG.MAX_ACCEPTED_FRAMES || 250;
+
+    // Milestones for flexible scanning: 100, 150, 200, 250
+    if (capturedFrames.length === 100) {
       haptic('heavy');
+      triggerShiningBurst('🎯 100 PHOTOS MILESTONE!');
+      showToast('🎯 100 Photos captured! You can tap (✓) to proceed to laptop or keep scanning up to 250.', 'success');
+      highlightProceedBtn();
+    } else if (capturedFrames.length === 150) {
+      haptic('medium');
+      showToast('📸 150 Photos captured! Tap (✓) anytime to proceed or keep adding.', 'info');
+      highlightProceedBtn();
+    } else if (capturedFrames.length === 200) {
+      haptic('medium');
+      showToast('📸 200 Photos captured! High detail density. Tap (✓) or add up to 250.', 'info');
+      highlightProceedBtn();
+    } else if (capturedFrames.length >= maxFrames) {
+      stopAutoCapture();
+      showToast(`🏁 Reached max ${maxFrames} photos! Tap ✓ to review & send to laptop.`, 'success');
+      haptic('heavy');
+      highlightProceedBtn();
+    } else if (capturedFrames.length % 15 === 0) {
+      haptic('light');
+      showToast(`📸 ${capturedFrames.length} photos captured (Max ${maxFrames})`, 'info');
     }
   }, 'image/jpeg', 0.95);
 
 }
 
+function highlightProceedBtn() {
+  const fb = document.getElementById('finishBtn');
+  if (fb) {
+    fb.style.boxShadow = '0 0 25px rgba(16,185,129,0.85)';
+    fb.style.borderColor = '#10b981';
+    fb.style.background = 'rgba(16,185,129,0.40)';
+  }
+  const pill = document.getElementById('floatingProceedPill');
+  if (pill) {
+    pill.style.display = 'flex';
+    const txt = document.getElementById('floatingProceedText');
+    if (txt) txt.textContent = `PROCEED TO LAPTOP (${capturedFrames.length} PHOTOS)`;
+  }
+}
+
 function updateCount() {
-  const pct = scanner.getHudSnapshot().coveragePct;      // real coverage, not frames/60
-  document.getElementById('camCount').textContent = pct + '%';
+  const maxFrames = SCANNER_CONFIG.MAX_ACCEPTED_FRAMES || 250;
+  const camCountEl = document.getElementById('camCount');
+  const countLabelEl = document.querySelector('.cam-count-label');
+
+  if (currentPhase === 'CAPTURING') {
+    if (camCountEl) camCountEl.textContent = capturedFrames.length;
+    if (countLabelEl) countLabelEl.textContent = `/${maxFrames} SHOTS`;
+    const statusText = document.getElementById('scanStatusText');
+    if (statusText) statusText.textContent = `📸 CAPTURING (${capturedFrames.length}/${maxFrames})`;
+  } else {
+    const pct = scanner.getHudSnapshot().coveragePct;
+    if (camCountEl) camCountEl.textContent = pct + '%';
+    if (countLabelEl) countLabelEl.textContent = 'SCANNED';
+  }
+
+  if (capturedFrames.length >= 100) {
+    highlightProceedBtn();
+  } else {
+    const pill = document.getElementById('floatingProceedPill');
+    if (pill) pill.style.display = 'none';
+  }
 }
 
 function finishCapture() {
   if (capturedFrames.length < 5) {
     showToast('Need at least 5 frames', 'error'); haptic('light'); return;
   }
-  stopAutoShutter();
+  stopAutoCapture();
   haptic('medium');
   showReview();
 }
@@ -3490,7 +3549,15 @@ function refreshSpatialHud(s) {
   set('hudCoverage', snap.coveragePct + '%', snap.coveragePct >= 90 ? '#10b981' : '#38bdf8');
   set('hudQuality', snap.qualityPct + '%', snap.qualityPct >= 90 ? '#10b981' : '#38bdf8');
   set('hudState', snap.state);
-  set('camCount', snap.coveragePct + '%');
+  if (snap.state === 'CAPTURING') {
+    set('camCount', capturedFrames.length);
+    const lbl = document.querySelector('.cam-count-label');
+    if (lbl) lbl.textContent = `/${SCANNER_CONFIG.MAX_ACCEPTED_FRAMES} SHOTS`;
+  } else {
+    set('camCount', snap.coveragePct + '%');
+    const lbl = document.querySelector('.cam-count-label');
+    if (lbl) lbl.textContent = 'SCANNED';
+  }
 
   if (snap.state === 'MAPPING') {
     // Handled by 30s mapping ticker
@@ -3866,7 +3933,11 @@ function renderReviewGrid() {
 
   const sub = document.getElementById('reviewSubtitle');
   if (sub) {
-    sub.textContent = `${capturedFrames.length} frames · ${scanTarget==='building'?'Structural':'Object 360°'}`;
+    sub.textContent = `${capturedFrames.length} high-clarity photos captured · Ready for KIRI 3D`;
+  }
+  const sendBtnLabel = document.getElementById('sendBtnLabel');
+  if (sendBtnLabel) {
+    sendBtnLabel.textContent = `SEND TO LAPTOP (${capturedFrames.length} PHOTOS)`;
   }
   const sendBtn = document.querySelector('.review-send-btn');
   if (sendBtn) {
@@ -3904,10 +3975,61 @@ function showReview() {
   playSuccess();
 }
 
+async function resumeCamera() {
+  document.getElementById('reviewOverlay').classList.remove('active','overlay-enter');
+  const overlay = document.getElementById('cameraOverlay');
+  overlay.classList.add('active','overlay-enter');
+
+  const vid = document.getElementById('videoEl');
+  if (!mediaStream || !vid.srcObject) {
+    const constraintList = [
+      { video: { facingMode: { ideal: cameraFacing }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+      { video: { facingMode: cameraFacing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+      { video: { facingMode: cameraFacing }, audio: false },
+      { video: true, audio: false }
+    ];
+    for (const c of constraintList) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(c);
+        if (stream) {
+          mediaStream = stream;
+          vid.srcObject = mediaStream;
+          await vid.play().catch(() => {});
+          break;
+        }
+      } catch (_) {}
+    }
+  } else {
+    try { await vid.play(); } catch (_) {}
+  }
+
+  currentPhase = 'CAPTURING';
+  scanner.state = 'CAPTURING';
+  updateCount();
+  startARCanvas();
+
+  const maxFrames = SCANNER_CONFIG.MAX_ACCEPTED_FRAMES || 250;
+  const statusInd = document.getElementById('scanStatusIndicator');
+  if (statusInd) {
+    statusInd.className = 'scan-status-indicator active-scanning';
+    document.getElementById('scanStatusText').textContent = `📸 CAPTURING (${capturedFrames.length}/${maxFrames})`;
+  }
+
+  const autoBtn = document.getElementById('autoCaptureToggleBtn');
+  if (autoBtn) autoBtn.style.display = 'flex';
+  const sb = document.getElementById('shutterBtn');
+  if (sb) sb.classList.remove('capturing');
+  document.getElementById('shutterLabel').innerHTML = 'TAKE<br>PHOTO';
+
+  if (capturedFrames.length >= 100) {
+    highlightProceedBtn();
+  }
+
+  showToast(`Resumed! ${capturedFrames.length} photos preserved. Take more or tap ✓ when done.`, 'info');
+}
 
 function backToCamera() {
-  document.getElementById('reviewOverlay').classList.remove('active','overlay-enter');
-  openCamera();
+  resumeCamera();
 }
 
 /* ══════════════════════════════════════════════════════════════
