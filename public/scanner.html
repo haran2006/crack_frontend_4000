@@ -1951,7 +1951,7 @@ let captureCanvas;   // for JPEG capture
 
 /* Auto-shutter state */
 let autoRunning = false;
-let autoIntervalMs = 333;         // 3 frames per second
+let autoIntervalMs = 500;         // 2 frames per second (2 FPS - 500ms)
 let autoTimerId = null;
 let autoTickerId = null;          // 100ms ticker for countdown ring
 let autoTickElapsed = 0;
@@ -2124,7 +2124,7 @@ function startAutoShutter() {
   ring.style.strokeDashoffset = '0';   // fully filled = active
   document.getElementById('nextShotTimer').textContent = 'SCANNING…';
 
-  // Actual capture interval — 3 frames/sec
+  // Actual capture interval — 2 frames/sec (500ms)
   autoTimerId = setInterval(() => {
     captureFrame();
   }, autoIntervalMs);
