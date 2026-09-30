@@ -22,12 +22,37 @@ const nextConfig = {
       },
     ];
   },
-  async rewrites() {
+  async redirects() {
     return [
       {
         source: "/",
         destination: "/scanner.html",
+        permanent: false,
       },
+      {
+        source: "/scanner",
+        destination: "/scanner.html",
+        permanent: false,
+      },
+      {
+        source: "/dashboard",
+        destination: "/dashboard.html",
+        permanent: false,
+      },
+      {
+        source: "/evaluations",
+        destination: "/evaluations.html",
+        permanent: false,
+      },
+      {
+        source: "/ar-vr",
+        destination: "/scanner.html",
+        permanent: false,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
       {
         source: "/scanner",
         destination: "/scanner.html",
