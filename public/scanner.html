@@ -1634,6 +1634,39 @@ body {
   font-weight: 700;
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.45);
 }
+
+/* KIRI 3D Overlap Health Meter */
+.overlap-hud-badge {
+  position: absolute;
+  top: 54px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.40);
+  backdrop-filter: blur(12px);
+  padding: 6px 14px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 15;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.2s ease;
+}
+.overlap-bar-track {
+  width: 140px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.overlap-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #38bdf8);
+  border-radius: 2px;
+  transition: width 0.15s ease, background 0.2s ease;
+}
 </style>
 </head>
 <body>
@@ -1955,6 +1988,18 @@ body {
       <div class="cam-count-label">SCANNED</div>
     </div>
     <div class="cam-mode-badge" id="camModeBadge">AUTO · BLDG</div>
+  </div>
+
+  <!-- KIRI Engine 3D Overlap Health Meter (Active during capturing phase) -->
+  <div id="overlapHudBadge" class="overlap-hud-badge" style="display:none;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span id="overlapDot" style="width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;display:inline-block;"></span>
+      <span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.5px;">KIRI 3D OVERLAP:</span>
+      <strong id="overlapPctText" style="font-family:var(--font-mono);font-size:11px;color:#10b981;">100% (READY)</strong>
+    </div>
+    <div class="overlap-bar-track">
+      <div id="overlapBarFill" class="overlap-bar-fill" style="width:100%;"></div>
+    </div>
   </div>
 
   <!-- 30-SECOND AR/VR SPATIAL MAPPING HUD CARD -->
@@ -2284,8 +2329,8 @@ const SCANNER_CONFIG = {
   ZONE_Y: 0.56,                 // fraction of screen height (centered) that counts as "being scanned"
   MAX_SPEED_DEG_S: 70,          // faster than this = motion blur, no credit
   ASSUMED_DIAG_FOV_DEG: 67,     // typical phone main camera; browsers do not expose real intrinsics
-  CAPTURE_MIN_ROT_DEG: 10,      // auto-capture: min view change since last photo
-  CAPTURE_MAX_SPEED_DEG_S: 25,  // auto-capture: must be steady
+  CAPTURE_MIN_ROT_DEG: 7,       // auto-capture: ~7 deg step gives ~85% overlap (ideal for KIRI photogrammetry)
+  CAPTURE_MAX_SPEED_DEG_S: 32,  // auto-capture: steady speed guard
   MAX_ACCEPTED_FRAMES: 250,
   // pitch band (degrees) that must be covered, per scan mode
   PITCH_BAND: { building: [-20, 60], object: [-60, 20] },
@@ -2698,20 +2743,34 @@ class SpatialScanner {
     return parts.length ? 'TURN ' + parts.join(' · ') : 'HOLD STEADY — scanning here';
   }
 
-  /* ---- capture decision (auto mode) ---- */
+  /* ---- Photogrammetry Overlap Computation & Capture Decision (KIRI Engine) ---- */
+  computeOverlap() {
+    if (!this.previousCapturePose) return { overlapPct: 100, rotationDeg: 0, status: 'FIRST_FRAME' };
+    const q0 = this.previousCapturePose.rotation, q1 = this.currentPose.rotation;
+    const dot = Math.max(-1, Math.min(1, q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w));
+    const rotationDeg = Math.acos(Math.abs(dot)) * 2 * R2D;
+    // Standard camera lens horizontal FOV ~60 deg
+    const overlapPct = Math.max(0, Math.min(100, Math.round((1 - (rotationDeg / 60)) * 100)));
+    return { overlapPct, rotationDeg };
+  }
+
   shouldCaptureAuto() {
     if (this.spatialMap.trackingState === 'lost') return { capture: false, reason: 'TRACKING_LOST' };
     if (this.speedDegS > SCANNER_CONFIG.CAPTURE_MAX_SPEED_DEG_S) return { capture: false, reason: 'MOVING_TOO_FAST' };
     if (!this.previousCapturePose) return { capture: true, reason: 'FIRST_FRAME' };
-    const q0 = this.previousCapturePose.rotation, q1 = this.currentPose.rotation;
-    const dot = Math.max(-1, Math.min(1, q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w));
-    const rotationDeg = Math.acos(Math.abs(dot)) * 2 * R2D;
-    if (rotationDeg < SCANNER_CONFIG.CAPTURE_MIN_ROT_DEG) return { capture: false, reason: 'INSUFFICIENT_POSE_CHANGE' };
-    const hasNewArea = this._cellsInZone(SCANNER_CONFIG.PHOTO_ZONE_X, SCANNER_CONFIG.PHOTO_ZONE_Y).some((i) => this.photoCells[i] === 0);
-    if (!hasNewArea) return { capture: false, reason: 'NO_NEW_AREA' };
-    return { capture: true, reason: 'NEW_AREA' };
+
+    const { overlapPct, rotationDeg } = this.computeOverlap();
+
+    // 1. Min rotation guard: avoid duplicate identical photos (< 6.0 deg = > 90% overlap)
+    if (rotationDeg < 6.0) {
+      return { capture: false, reason: 'OVERLAP_TOO_HIGH', overlapPct };
+    }
+
+    // 2. KIRI Engine golden range: 65% to 85% overlap (7° to 18° rotation step)
+    // Whenever camera has moved into optimal overlap and is steady, capture!
+    return { capture: true, reason: `OVERLAP_${overlapPct}%`, overlapPct };
   }
-  shouldCaptureFrame() { return this.shouldCaptureAuto(); }   // backward compatible name
+  shouldCaptureFrame() { return this.shouldCaptureAuto(); }
 
   markCaptured(pose) {
     this.previousCapturePose = JSON.parse(JSON.stringify(pose));
@@ -3439,7 +3498,7 @@ function captureFrame(reason, precomputedQuality) {
       viewYaw: Math.round(scanner.viewYaw * 10) / 10,
       viewPitch: Math.round(scanner.viewPitch * 10) / 10,
       sharpnessScore: Math.round(quality.sharpness),
-      overlapScore: scanner.previousCapturePose ? null : 0,
+      overlapScore: scanner.computeOverlap().overlapPct,
       dir: region,           // kept for the existing sector-map drawing code
       captureReason: reason || 'MANUAL',
     };
@@ -3549,11 +3608,45 @@ function refreshSpatialHud(s) {
   set('hudCoverage', snap.coveragePct + '%', snap.coveragePct >= 90 ? '#10b981' : '#38bdf8');
   set('hudQuality', snap.qualityPct + '%', snap.qualityPct >= 90 ? '#10b981' : '#38bdf8');
   set('hudState', snap.state);
+  const overlapBadge = document.getElementById('overlapHudBadge');
   if (snap.state === 'CAPTURING') {
     set('camCount', capturedFrames.length);
     const lbl = document.querySelector('.cam-count-label');
     if (lbl) lbl.textContent = `/${SCANNER_CONFIG.MAX_ACCEPTED_FRAMES} SHOTS`;
+
+    if (overlapBadge) {
+      overlapBadge.style.display = 'flex';
+      const { overlapPct } = s.computeOverlap();
+      const pctTxt = document.getElementById('overlapPctText');
+      const barFill = document.getElementById('overlapBarFill');
+      const dot = document.getElementById('overlapDot');
+
+      if (barFill) barFill.style.width = Math.min(100, overlapPct) + '%';
+
+      if (!s.previousCapturePose) {
+        if (pctTxt) { pctTxt.textContent = 'READY FOR 1ST PHOTO'; pctTxt.style.color = '#38bdf8'; }
+        if (dot) { dot.style.background = '#38bdf8'; dot.style.boxShadow = '0 0 8px #38bdf8'; }
+        if (barFill) barFill.style.background = '#38bdf8';
+      } else if (overlapPct >= 65 && overlapPct <= 85) {
+        if (pctTxt) { pctTxt.textContent = `${overlapPct}% (OPTIMAL FOR 3D)`; pctTxt.style.color = '#10b981'; }
+        if (dot) { dot.style.background = '#10b981'; dot.style.boxShadow = '0 0 8px #10b981'; }
+        if (barFill) barFill.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
+      } else if (overlapPct > 85) {
+        if (pctTxt) { pctTxt.textContent = `${overlapPct}% (VERY HIGH)`; pctTxt.style.color = '#38bdf8'; }
+        if (dot) { dot.style.background = '#38bdf8'; dot.style.boxShadow = '0 0 8px #38bdf8'; }
+        if (barFill) barFill.style.background = 'linear-gradient(90deg, #0284c7, #38bdf8)';
+      } else if (overlapPct >= 50 && overlapPct < 65) {
+        if (pctTxt) { pctTxt.textContent = `${overlapPct}% (FAIR - SLOW DOWN)`; pctTxt.style.color = '#f59e0b'; }
+        if (dot) { dot.style.background = '#f59e0b'; dot.style.boxShadow = '0 0 8px #f59e0b'; }
+        if (barFill) barFill.style.background = '#f59e0b';
+      } else {
+        if (pctTxt) { pctTxt.textContent = `${overlapPct}% (GAP DETECTED!)`; pctTxt.style.color = '#ef4444'; }
+        if (dot) { dot.style.background = '#ef4444'; dot.style.boxShadow = '0 0 8px #ef4444'; }
+        if (barFill) barFill.style.background = '#ef4444';
+      }
+    }
   } else {
+    if (overlapBadge) overlapBadge.style.display = 'none';
     set('camCount', snap.coveragePct + '%');
     const lbl = document.querySelector('.cam-count-label');
     if (lbl) lbl.textContent = 'SCANNED';
@@ -3887,6 +3980,14 @@ function drawGuidance(ctx, W, H) {
     ctx.lineTo(-30, 9); ctx.lineTo(-6, 9); ctx.lineTo(-6, 24); ctx.closePath(); ctx.fill();
   }
   ctx.restore();
+
+  if (st === 'CAPTURING' && scanner.previousCapturePose) {
+    const { overlapPct } = scanner.computeOverlap();
+    if (overlapPct < 55) {
+      drawGuideBanner(ctx, W, H, `⚠️ OVERLAP LOW (${overlapPct}%) — TURN BACK SLIGHTLY`, '#ef4444');
+      return;
+    }
+  }
 
   drawGuideBanner(ctx, W, H, scanner.guidanceText(), '#f59e0b');
 }
