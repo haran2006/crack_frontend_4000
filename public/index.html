@@ -1691,6 +1691,10 @@ body {
       <span id="targetModeIcon">☁️</span>
       <span id="targetModeLabel">Cloud</span>
     </button>
+    <div class="topbar-status" id="kiriPill" style="cursor:pointer;" onclick="openTargetModal()" title="KIRI Photogrammetry Cloud Pool">
+      <span style="font-size:11px;">🧠</span>
+      <span id="kiriPillLabel" style="font-weight:700;color:var(--cyan);">13 KIRI</span>
+    </div>
     <div class="topbar-status" id="wifiStatus">
       <div class="status-dot"></div>
       <span id="wifiLabel">LIVE</span>
@@ -2250,6 +2254,17 @@ body {
     <p style="font-size:12.5px;color:var(--slate-muted);margin-bottom:14px;line-height:1.5;">
       Choose where to stream scan data. Cloud Relay allows sending from cellular data anywhere in the world:
     </p>
+
+    <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:var(--r-sm);padding:12px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:12px;font-weight:700;color:#0369a1;">🧠 KIRI 3D Photogrammetry Pool:</span>
+        <span id="targetModalKiriBadge" style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:#0284c7;background:#e0f2fe;padding:2px 8px;border-radius:10px;">13 Credits Active</span>
+      </div>
+      <div id="targetModalKeyList" style="font-size:11px;color:#0369a1;display:flex;flex-direction:column;gap:3px;margin-top:6px;">
+        <div>• <b>Primary Key 1:</b> 3 Credits (kiri_OgOM...)</div>
+        <div>• <b>Backup Key 2:</b> 10 Credits (kiri_VSdT...) <span style="color:#10b981;font-weight:700;">[Auto-Failover Active]</span></div>
+      </div>
+    </div>
 
     <div class="sync-mode-card active" id="modeCloudCard" onclick="selectSyncMode('cloud')">
       <div class="sync-mode-head">
@@ -4212,6 +4227,26 @@ function updateSyncBadgeUI() {
   }
 }
 updateSyncBadgeUI();
+
+async function loadKiriLiveBalance() {
+  try {
+    const res = await fetch('/api/kiri/balance');
+    const data = await res.json();
+    if (data.ok && data.data) {
+      const pill = document.getElementById('kiriPillLabel');
+      if (pill) pill.textContent = `${data.data.balance} KIRI`;
+      const badge = document.getElementById('targetModalKiriBadge');
+      if (badge) badge.textContent = `${data.data.balance} Credits Active`;
+      const list = document.getElementById('targetModalKeyList');
+      if (list && data.data.keys) {
+        list.innerHTML = data.data.keys.map(k => `<div>• <b>${k.name}:</b> ${k.balance} Credits</div>`).join('');
+      }
+    }
+  } catch (e) {
+    console.warn("Could not load KIRI balance:", e);
+  }
+}
+loadKiriLiveBalance();
 
 /* ══════════════════════════════════════════════════════════════
    GEMINI AI MULTIMODAL AUDIT
