@@ -470,7 +470,7 @@ body {
 }
 .launch-note .lock-icon { font-size: 13px; }
 
-/* ─── SECTION 4: MOBILE 3D TWIN & CRACK INSPECTOR ────────────────── */
+/* ─── SECTION 4: MOBILE 3D TWIN & CRACK INSPECTION ────────────────── */
 .mobile-twin-section {
   padding: 20px 20px calc(80px + var(--safe-bot));
 }
@@ -833,7 +833,25 @@ body {
 @keyframes overlayOut { to{opacity:0;transform:translateY(20px);} }
 
 /* ── CAMERA OVERLAY ── */
-#cameraOverlay { background: #000; }
+#cameraOverlay {
+  background: #000;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+#cameraOverlay.active {
+  display: block !important;
+}
+
+#videoEl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  z-index: 1;
+  background: transparent;
+}
 
 .cam-hud-top {
   position: absolute;
@@ -875,12 +893,7 @@ body {
   text-transform: uppercase;
 }
 
-#videoEl {
-  position: absolute;
-  inset: 0; width: 100%; height: 100%;
-  object-fit: cover;
-  display: block;
-}
+
 
 /* Viewfinder HUD */
 .vf-corner {
@@ -1082,6 +1095,18 @@ body {
   font-family: var(--font-mono); font-size: 9px; font-weight: 700;
   color: white; background: rgba(0,0,0,0.55); border-radius: 4px; padding: 1px 4px;
 }
+.photo-thumb-del {
+  position: absolute; top: 4px; right: 4px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(239, 68, 68, 0.92);
+  color: white; border: 1.5px solid rgba(255, 255, 255, 0.7);
+  font-size: 13px; font-weight: 700; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  z-index: 10; transition: transform 0.15s, background 0.15s;
+}
+.photo-thumb-del:active { transform: scale(0.85); background: #dc2626; }
+
 
 .review-footer {
   padding: 16px 20px calc(var(--safe-bot) + 16px);
@@ -1423,6 +1448,192 @@ body {
   transition: transform 0.15s;
 }
 .review-gemini-btn:active { transform: scale(0.98); }
+
+/* ══════════════════════════════════════════════════════════════
+   AR / VR SCANNING INDICATOR & LASER SYSTEM (CLEAN & SLEEK)
+══════════════════════════════════════════════════════════════ */
+
+/* 1. Subtle Scanning Border */
+.scanner-active-border {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  border: 2px solid transparent;
+  transition: border-color 0.3s ease;
+}
+.scanner-active-border.active-scanning {
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+/* 2. Sleek Shining Laser Sweep Line */
+.shining-laser-sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(56, 189, 248, 0.25) 15%, 
+    #38bdf8 45%, 
+    #ffffff 50%, 
+    #38bdf8 55%, 
+    rgba(56, 189, 248, 0.25) 85%, 
+    transparent 100%
+  );
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 20px rgba(0, 242, 255, 0.5);
+  pointer-events: none;
+  z-index: 7;
+  display: none;
+}
+.shining-laser-sweep.active {
+  display: block;
+  animation: laserSweepMotion 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes laserSweepMotion {
+  0% { top: 15%; opacity: 0.2; }
+  50% { top: 85%; opacity: 0.9; }
+  100% { top: 15%; opacity: 0.2; }
+}
+
+/* 3. Subtle Scanned Mini Pill (Non-intrusive) */
+.scanned-mini-pill {
+  position: absolute;
+  top: calc(var(--safe-top) + 64px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.8);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+  font-family: var(--font-head);
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 5px 14px;
+  z-index: 15;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: miniPillFade 1.2s ease forwards;
+}
+@keyframes miniPillFade {
+  0% { opacity: 0; transform: translate(-50%, -8px); }
+  15% { opacity: 1; transform: translate(-50%, 0); }
+  80% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -6px); }
+}
+
+
+/* 4. Scanning Status Bar (Top Active vs Standby) */
+.scan-status-indicator {
+  position: absolute;
+  top: calc(var(--safe-top) + 12px);
+  left: 64px;
+  right: 120px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: var(--r-full);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  z-index: 10;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+.scan-status-indicator.standby {
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #94a3b8;
+}
+.scan-status-indicator.active-scanning {
+  background: rgba(2, 132, 199, 0.38);
+  border: 1.5px solid #38bdf8;
+  color: #ffffff;
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.6);
+}
+.live-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #94a3b8;
+  display: inline-block;
+}
+.scan-status-indicator.active-scanning .live-dot {
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+  animation: liveDotPulse 1s infinite alternate ease-in-out;
+}
+@keyframes liveDotPulse {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1.3); opacity: 1; }
+}
+
+/* 5. 30-Second Mapping Banner */
+.mapping-30s-card {
+  position: absolute;
+  top: calc(var(--safe-top) + 64px);
+  left: 14px;
+  right: 14px;
+  z-index: 10;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1.5px solid rgba(56, 189, 248, 0.45);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mapping-progress-bar-bg {
+  width: 100%;
+  height: 9px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--r-full);
+  overflow: hidden;
+  position: relative;
+}
+.mapping-progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #0284c7, #38bdf8, #10b981);
+  box-shadow: 0 0 12px #38bdf8;
+  border-radius: var(--r-full);
+  transition: width 0.1s linear;
+}
+.sector-pills-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.sector-pill {
+  padding: 5px 3px;
+  border-radius: 6px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  transition: all 0.25s;
+}
+.sector-pill.scanned {
+  background: rgba(16, 185, 129, 0.28);
+  border-color: #10b981;
+  color: #34d399;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.45);
+}
 </style>
 </head>
 <body>
@@ -1713,37 +1924,99 @@ body {
 
 <!-- CAMERA OVERLAY -->
 <div class="overlay" id="cameraOverlay" role="dialog" aria-label="Camera viewfinder">
-  <video id="videoEl" autoplay muted playsinline></video>
+  <video id="videoEl" autoplay muted playsinline webkit-playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;background:transparent;display:block;"></video>
 
   <!-- AR Canvas drawn directly on video -->
-  <canvas id="arCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6;"></canvas>
+  <canvas id="arCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;background:transparent;"></canvas>
+
+  <!-- 1. Active Scanning Border Layer -->
+  <div id="scannerActiveBorder" class="scanner-active-border" style="z-index:3;"></div>
+
+  <!-- 2. Shining Laser Sweep Beam Effect Layer -->
+  <div id="shiningLaserSweep" class="shining-laser-sweep" style="z-index:4;"></div>
 
   <!-- Flash effect -->
-  <div class="cam-flash" id="camFlash"></div>
+  <div class="cam-flash" id="camFlash" style="z-index:5;"></div>
 
   <!-- Top HUD -->
-  <div class="cam-hud-top">
+  <div class="cam-hud-top" style="z-index:10;">
     <button class="cam-close-btn" onclick="closeCamera()" aria-label="Close camera">
       <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
-    <div class="cam-counter">
+    
+    <!-- Top Active vs Standby Scanning Indicator Bar -->
+    <div id="scanStatusIndicator" class="scan-status-indicator standby">
+      <span class="live-dot"></span>
+      <span id="scanStatusText">STANDBY · TAP START</span>
+    </div>
+
+    <div class="cam-counter" id="camCounterTap" onclick="handleDebugTap()" style="cursor:pointer;">
       <div class="cam-count-num" id="camCount">0%</div>
       <div class="cam-count-label">SCANNED</div>
     </div>
     <div class="cam-mode-badge" id="camModeBadge">AUTO · BLDG</div>
   </div>
 
+  <!-- 30-SECOND AR/VR SPATIAL MAPPING HUD CARD -->
+  <div id="mapping30sCard" class="mapping-30s-card" style="display:none;z-index:10;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:var(--font-head);font-size:12px;font-weight:700;color:#38bdf8;display:flex;align-items:center;gap:6px;">
+        <span style="animation:spin 3s linear infinite;display:inline-block;">🌐</span> 30s AR SPATIAL MAPPING
+      </span>
+      <span id="mappingSecRemaining" style="font-family:var(--font-mono);font-size:13px;font-weight:800;color:#10b981;text-shadow:0 0 8px #10b981;">30.0s</span>
+    </div>
+    <div class="mapping-progress-bar-bg">
+      <div id="mappingProgressBarFill" class="mapping-progress-bar-fill"></div>
+    </div>
+    <div class="sector-pills-row">
+      <div id="pillFront" class="sector-pill">FRONT: <b id="covF">0%</b></div>
+      <div id="pillRight" class="sector-pill">RIGHT: <b id="covR">0%</b></div>
+      <div id="pillBack" class="sector-pill">BACK: <b id="covB">0%</b></div>
+      <div id="pillLeft" class="sector-pill">LEFT: <b id="covL">0%</b></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
+      <span style="font-size:10px;color:#94a3b8;" id="mappingInstruction">Slowly rotate around the object to scan all sectors</span>
+      <button onclick="skipToCaptureMode()" class="skip-mapping-btn" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:#38bdf8;padding:3px 8px;border-radius:4px;font-size:9.5px;font-family:var(--font-mono);cursor:pointer;">Skip ⏩</button>
+    </div>
+  </div>
+
+  <!-- SPATIAL ENGINE HUD (Hidden by default to keep viewfinder unobstructed) -->
+  <div id="spatialHud" style="
+    display:none; position:absolute; top:calc(var(--safe-top) + 165px); left:14px; right:14px;
+    z-index:10; pointer-events:none;
+    background:rgba(0,0,0,0.55); border:1px solid rgba(56,189,248,0.25);
+    border-radius:12px; padding:9px 12px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    font-family:var(--font-mono); font-size:10.5px; color:rgba(255,255,255,0.85);
+    grid-template-columns:1fr 1fr; gap:3px 14px;">
+    <div>MODE <b id="hudLevel" style="color:#38bdf8;">—</b></div>
+    <div>TRACKING <b id="hudTracking" style="color:#94a3b8;">—</b></div>
+    <div>DEPTH <b id="hudDepth" style="color:#94a3b8;">—</b></div>
+    <div>COVERAGE <b id="hudCoverage" style="color:#94a3b8;">0%</b></div>
+    <div>MAP QUALITY <b id="hudQuality" style="color:#94a3b8;">0%</b></div>
+    <div>STATE <b id="hudState" style="color:#94a3b8;">IDLE</b></div>
+  </div>
+
+
+  <!-- Hidden developer debug panel (triple-tap the frame counter to reveal) -->
+  <div id="debugPanel" style="
+    display:none; position:absolute; top:calc(var(--safe-top) + 245px); left:14px; right:14px;
+    z-index:11; max-height:38vh; overflow-y:auto;
+    background:rgba(0,0,0,0.78); border:1px solid rgba(16,185,129,0.35);
+    border-radius:10px; padding:10px 12px; font-family:var(--font-mono);
+    font-size:10px; line-height:1.6; color:#a7f3d0; white-space:pre-wrap;"></div>
+
   <!-- Auto-scan status label -->
   <div id="autoCountdown" style="
     position:absolute; bottom:130px; left:50%; transform:translateX(-50%);
-    z-index:10; text-align:center; pointer-events:none;">
+    z-index:10; text-align:center; pointer-events:none; width:max-content; max-width:90%;">
     <div style="
-      font-family:var(--font-mono); font-size:13px; font-weight:700;
-      color:rgba(56,189,248,0.95); letter-spacing:1.2px; text-transform:uppercase;
-      background:rgba(0,0,0,0.55); border:1px solid rgba(56,189,248,0.28);
+      font-family:var(--font-mono); font-size:12.5px; font-weight:700;
+      color:rgba(56,189,248,0.95); letter-spacing:1px; text-transform:uppercase;
+      background:rgba(0,0,0,0.65); border:1px solid rgba(56,189,248,0.35);
       border-radius:9999px; padding:6px 18px;
       backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);">
-      <span id="nextShotTimer">TAP TO START</span>
+      <span id="nextShotTimer">TAP TO START 30s AR SCAN</span>
     </div>
   </div>
 
@@ -1761,14 +2034,35 @@ body {
       </svg>
       <div class="shutter" id="shutterBtn">
         <div class="shutter-inner">
-          <div class="shutter-label" id="shutterLabel">TAP<br>START</div>
+          <div class="shutter-label" id="shutterLabel">START<br>30s AR</div>
         </div>
       </div>
     </div>
 
+    <!-- Toggle Auto Capture Button in Phase 2 -->
+    <button class="cam-side-btn" id="autoCaptureToggleBtn" onclick="toggleAutoCaptureMode()"
+      style="display:none;font-size:9.5px;font-family:var(--font-mono);font-weight:700;color:#38bdf8;border-color:rgba(56,189,248,0.5);width:44px;height:44px;border-radius:50%;background:rgba(15,23,42,0.7);cursor:pointer;" aria-label="Toggle auto capture">
+      AUTO<br><span id="autoCaptureSubText">OFF</span>
+    </button>
+
     <button class="cam-side-btn" id="finishBtn" onclick="finishCapture()"
       style="background:rgba(16,185,129,0.20);border-color:rgba(16,185,129,0.40);" aria-label="Finish and review">
       <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" stroke="#10b981"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- 30-SECOND MAP COMPLETE CELEBRATION MODAL -->
+<div id="mapCompleteModal" class="target-modal-overlay" style="z-index:9999;">
+  <div class="target-modal-card" style="text-align:center;border:2px solid #38bdf8;box-shadow:0 0 45px rgba(56,189,248,0.45);max-width:380px;">
+    <div style="font-size:42px;margin-bottom:10px;animation:liveDotPulse 1.2s infinite alternate;">✨</div>
+    <h3 style="font-family:var(--font-head);font-size:20px;font-weight:800;color:#0f172a;margin-bottom:6px;">30s AR Scan Complete!</h3>
+    <p style="font-size:13px;color:#475569;line-height:1.5;margin-bottom:18px;">
+      Spatial coordinates, surface planes, and 4-sector coverage have been successfully mapped.<br><br>
+      <strong>Now tap below to capture high-resolution photos!</strong>
+    </p>
+    <button onclick="enterCaptureModeFromModal()" class="modal-save-btn" style="background:linear-gradient(135deg,#0284c7,#10b981);font-size:15px;font-weight:800;padding:14px;box-shadow:0 6px 24px rgba(16,185,129,0.4);">
+      📸 START CAPTURING IMAGES
     </button>
   </div>
 </div>
@@ -1943,29 +2237,582 @@ body {
    STATE
 ══════════════════════════════════════════════════════════════ */
 let scanTarget = 'building';
-let capturedFrames = [];
+let capturedFrames = [];          // accepted frames: {id, blob, url, timestamp, pose, intrinsics, trackingState, depthAvailable, coverageRegion, sharpnessScore, overlapScore, dir}
 let currentScanId = null;
 let mediaStream = null;
 let cameraFacing = 'environment';
-let captureCanvas;   // for JPEG capture
+let captureCanvas;   // for JPEG capture (native resolution)
 
-/* Auto-shutter state */
-let autoRunning = false;
-let autoIntervalMs = 500;         // 2 frames per second (2 FPS - 500ms)
-let autoTimerId = null;
-let autoTickerId = null;          // 100ms ticker for countdown ring
-let autoTickElapsed = 0;
-
-/* Scan directions / coverage */
+/* Coverage regions — coarse buckets used for the HUD compass + surface-coverage grid.
+   These are populated from REAL tracked camera yaw (Level 2/3) or, in Level 1 fallback,
+   from a simple round-robin so the existing UI still has something meaningful to show. */
 const DIRECTIONS = ['FRONT', 'RIGHT-SIDE', 'BACK', 'LEFT-SIDE'];
-const DIR_ANGLES  = [270, 0, 90, 180];  // degrees on the sector map (top=front)
-let dirIndex = 0;
+const FRAMES_PER_DIR = 15;                     // reference frames/region for the HUD ring fill
+const TOTAL_TARGET = FRAMES_PER_DIR * DIRECTIONS.length;  // reference total (60) shown as camCount %
+let dirIndex = 0;       // legacy var kept so existing draw* functions & finishCapture logic still work
 let framePerDir = 0;
-const FRAMES_PER_DIR = 15;         // 15 frames per direction zone
-const TOTAL_TARGET = FRAMES_PER_DIR * DIRECTIONS.length;  // 60 frames total
 
-/* AR Canvas RAF */
+/* AR / mapping canvas RAF */
 let arRafId = null;
+
+/* Debug panel state */
+let debugVisible = false;
+let debugTapCount = 0;
+let debugTapTimer = null;
+
+/* ══════════════════════════════════════════════════════════════
+   SPATIAL SCANNER CONFIG
+══════════════════════════════════════════════════════════════ */
+const SCANNER_CONFIG = {
+  MAPPING_TARGET_SECONDS: 30,   // base mapping time
+  EXTEND_SECONDS: 15,           // extra time granted if gaps remain at the deadline
+  MAX_EXTENSIONS: 2,
+  EARLY_FINISH_COVERAGE: 0.95,  // finish before 30s if this much of the dome is covered
+  MIN_ACCEPT_COVERAGE: 0.80,    // below this at the deadline -> extend instead of "locking" the map
+  YAW_STEP_DEG: 15,             // dome cell width
+  PITCH_STEP_DEG: 20,           // dome cell height
+  PHOTO_ZONE_X: 0.90,           // area of the screen a photo is considered to cover (phase 2)
+  PHOTO_ZONE_Y: 0.90,
+  DWELL_SECONDS: 0.35,          // time a cell must be inside the central view zone to count as scanned
+  ZONE_X: 0.80,                 // fraction of screen width (centered) that counts as "being scanned"
+  ZONE_Y: 0.56,                 // fraction of screen height (centered) that counts as "being scanned"
+  MAX_SPEED_DEG_S: 70,          // faster than this = motion blur, no credit
+  ASSUMED_DIAG_FOV_DEG: 67,     // typical phone main camera; browsers do not expose real intrinsics
+  CAPTURE_MIN_ROT_DEG: 10,      // auto-capture: min view change since last photo
+  CAPTURE_MAX_SPEED_DEG_S: 25,  // auto-capture: must be steady
+  MAX_ACCEPTED_FRAMES: 220,
+  // pitch band (degrees) that must be covered, per scan mode
+  PITCH_BAND: { building: [-20, 60], object: [-60, 20] },
+};
+
+const D2R = Math.PI / 180;
+const R2D = 180 / Math.PI;
+const wrap360 = (a) => ((a % 360) + 360) % 360;
+const wrap180 = (a) => { a = wrap360(a); return a > 180 ? a - 360 : a; };
+
+/* 3x3 matrices as flat arrays [r0c0,r0c1,r0c2, r1c0,...] */
+function matMul(a, b) {
+  const o = new Array(9);
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++)
+    o[r * 3 + c] = a[r * 3] * b[c] + a[r * 3 + 1] * b[3 + c] + a[r * 3 + 2] * b[6 + c];
+  return o;
+}
+const Rx = (t) => { const c = Math.cos(t), s = Math.sin(t); return [1, 0, 0, 0, c, -s, 0, s, c]; };
+const Ry = (t) => { const c = Math.cos(t), s = Math.sin(t); return [c, 0, s, 0, 1, 0, -s, 0, c]; };
+const Rz = (t) => { const c = Math.cos(t), s = Math.sin(t); return [c, -s, 0, s, c, 0, 0, 0, 1]; };
+const mulVec = (m, v) => [
+  m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
+  m[3] * v[0] + m[4] * v[1] + m[5] * v[2],
+  m[6] * v[0] + m[7] * v[1] + m[8] * v[2],
+];
+const mulVecT = (m, v) => [  // transpose multiply (inverse of a rotation)
+  m[0] * v[0] + m[3] * v[1] + m[6] * v[2],
+  m[1] * v[0] + m[4] * v[1] + m[7] * v[2],
+  m[2] * v[0] + m[5] * v[1] + m[8] * v[2],
+];
+
+/* W3C DeviceOrientation -> rotation matrix (device frame -> earth frame: X east, Y north, Z up).
+   R = Rz(alpha) * Rx(beta) * Ry(gamma), then undo the screen rotation so the camera axes match the screen. */
+function orientationMatrix(alphaDeg, betaDeg, gammaDeg, screenAngleDeg) {
+  let R = matMul(matMul(Rz((alphaDeg || 0) * D2R), Rx((betaDeg || 0) * D2R)), Ry((gammaDeg || 0) * D2R));
+  R = matMul(R, Rz(-(screenAngleDeg || 0) * D2R));
+  return R;
+}
+
+function matToQuaternion(m) {
+  const t = m[0] + m[4] + m[8];
+  let w, x, y, z;
+  if (t > 0) { const s = Math.sqrt(t + 1) * 2; w = s / 4; x = (m[7] - m[5]) / s; y = (m[2] - m[6]) / s; z = (m[3] - m[1]) / s; }
+  else if (m[0] > m[4] && m[0] > m[8]) { const s = Math.sqrt(1 + m[0] - m[4] - m[8]) * 2; w = (m[7] - m[5]) / s; x = s / 4; y = (m[1] + m[3]) / s; z = (m[2] + m[6]) / s; }
+  else if (m[4] > m[8]) { const s = Math.sqrt(1 + m[4] - m[0] - m[8]) * 2; w = (m[2] - m[6]) / s; x = (m[1] + m[3]) / s; y = s / 4; z = (m[5] + m[7]) / s; }
+  else { const s = Math.sqrt(1 + m[8] - m[0] - m[4]) * 2; w = (m[3] - m[1]) / s; x = (m[2] + m[6]) / s; y = (m[5] + m[7]) / s; z = s / 4; }
+  return { x, y, z, w };
+}
+
+/* Direction on the dome: yaw = compass-style angle (clockwise, degrees), pitch = elevation (degrees). */
+const dirFromYawPitch = (yawDeg, pitchDeg) => {
+  const y = yawDeg * D2R, p = pitchDeg * D2R;
+  return [Math.sin(y) * Math.cos(p), Math.cos(y) * Math.cos(p), Math.sin(p)];
+};
+
+function makeEmptySpatialMap() {
+  return {
+    startedAt: null,
+    duration: 0,                 // ACTIVE mapping seconds (pauses excluded)
+    trackingState: 'initializing',
+    frames: [],
+    poses: [],
+    depthFrames: [],
+    featurePoints: [],
+    coverage: { front: 0, right: 0, back: 0, left: 0, top: 0, bottom: 0 },
+    cells: null,                 // Float32Array of per-cell progress 0..1 (the dome grid)
+    mapQuality: 0,
+    ready: false,
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SPATIAL SCANNER ENGINE
+   Honest description: this maps WHICH VIEW DIRECTIONS you have pointed the camera at
+   (a 360° coverage dome built from the phone's fused gyro/compass orientation). It does
+   not measure real surface geometry — that needs WebXR depth or server-side photogrammetry.
+══════════════════════════════════════════════════════════════ */
+class SpatialScanner {
+  constructor() {
+    this.level = 0;
+    this.levelLabel = 'UNKNOWN';
+    this.capabilities = { webxr: false, depthSensing: false, deviceMotion: false, deviceOrientation: false };
+    this.state = 'IDLE';   // IDLE | MAPPING | PAUSED | MAP_READY | CAPTURING
+    this.spatialMap = makeEmptySpatialMap();
+    this.scanMode = 'building';
+
+    this.currentPose = { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0, w: 1 } };
+    this.previousCapturePose = null;
+    this.intrinsics = null;
+    this.trackingQuality = 0;
+    this.featurePointCount = 0;
+
+    // orientation state
+    this.R = null;                 // device->earth rotation (screen-corrected)
+    this.hasSensor = false;        // real orientation events are arriving
+    this.simulated = false;        // laptop drag-to-look mode
+    this.lastEventTs = 0;
+    this.startYaw = null;          // absolute yaw at the moment mapping started (so FRONT = where you began)
+    this.viewYaw = 0;              // relative yaw 0..360
+    this.viewPitch = 0;
+    this.speedDegS = 0;
+    this._prevFwd = null;
+    this._lastUpdateTs = 0;
+    this._screenAngle = 0;
+
+    this.activeSeconds = 0;
+    this.extensions = 0;
+    this.targetSeconds = SCANNER_CONFIG.MAPPING_TARGET_SECONDS;
+    this.deadlineReached = null;   // set to 'complete' | 'extended' on the tick that hits the deadline
+
+    this.focalPx = 800;
+    this.viewW = 360; this.viewH = 640;
+
+    this._orientationHandler = null;
+    this._sim = { yaw: 0, pitch: 0, dragging: false, lx: 0, ly: 0 };
+    this.onUpdate = null;
+    this.stats = { mappedFrames: 0, acceptedFrames: 0, rejectedFrames: 0, lastCaptureReason: '—', lastSharpness: 0 };
+    this._buildGrid();
+  }
+
+  /* ---- dome grid ---- */
+  _buildGrid() {
+    const C = SCANNER_CONFIG;
+    const [pMin, pMax] = C.PITCH_BAND[this.scanMode] || C.PITCH_BAND.building;
+    this.cols = Math.round(360 / C.YAW_STEP_DEG);
+    this.rows = Math.max(1, Math.round((pMax - pMin) / C.PITCH_STEP_DEG));
+    this.pitchMin = pMin; this.pitchMax = pMax;
+    this.spatialMap.cells = new Float32Array(this.cols * this.rows);
+    this.photoCells = new Uint8Array(this.cols * this.rows);   // photos taken per cell (phase 2)
+  }
+  /* value 0..1 shown/used for guidance: scan progress while mapping, photo coverage while capturing */
+  layer(i) { return this.state === 'CAPTURING' ? (this.photoCells[i] > 0 ? 1 : 0) : this.spatialMap.cells[i]; }
+  setScanMode(mode) { this.scanMode = mode === 'object' ? 'object' : 'building'; this._buildGrid(); }
+  cellYawPitch(i) {   // centre of cell i (relative yaw, pitch)
+    const col = i % this.cols, row = Math.floor(i / this.cols);
+    return { yaw: (col + 0.5) * SCANNER_CONFIG.YAW_STEP_DEG, pitch: this.pitchMin + (row + 0.5) * SCANNER_CONFIG.PITCH_STEP_DEG };
+  }
+  cellIndexFor(yaw, pitch) {
+    const col = Math.floor(wrap360(yaw) / SCANNER_CONFIG.YAW_STEP_DEG) % this.cols;
+    const row = Math.floor((pitch - this.pitchMin) / SCANNER_CONFIG.PITCH_STEP_DEG);
+    if (row < 0 || row >= this.rows) return -1;
+    return row * this.cols + col;
+  }
+
+  /* ---- init / permissions ---- */
+  async initialize(videoEl) {
+    this.videoEl = videoEl;
+    this.capabilities.deviceOrientation = typeof DeviceOrientationEvent !== 'undefined';
+    this.capabilities.deviceMotion = typeof DeviceMotionEvent !== 'undefined';
+    this._updateGeometry();
+    this.level = 2;
+    this.levelLabel = 'LEVEL 2 · Sensor Orientation Tracking';
+    this.spatialMap = makeEmptySpatialMap();
+    this._buildGrid();
+    this.state = 'IDLE';
+    this._attachOrientation();     // start listening immediately so the dome is live before you tap START
+    return this.level;
+  }
+
+  /* Camera geometry: focal length in SCREEN pixels for a video shown with object-fit: cover. */
+  _updateGeometry() {
+    const vid = this.videoEl;
+    const W = (vid && vid.clientWidth) || this.viewW, H = (vid && vid.clientHeight) || this.viewH;
+    const vw = (vid && vid.videoWidth) || 1280, vh = (vid && vid.videoHeight) || 720;
+    const diagV = Math.sqrt(vw * vw + vh * vh);
+    const fVideo = (diagV / 2) / Math.tan((SCANNER_CONFIG.ASSUMED_DIAG_FOV_DEG * D2R) / 2);
+    const scale = Math.max(W / vw, H / vh);
+    this.focalPx = fVideo * scale;
+    this.viewW = W; this.viewH = H;
+    this.intrinsics = { fx: Math.round(fVideo), fy: Math.round(fVideo), cx: Math.round(vw / 2), cy: Math.round(vh / 2), estimated: true, width: vw, height: vh };
+  }
+
+  /* iOS needs a user gesture; ask for BOTH permissions. */
+  async requestMotionPermission() {
+    try {
+      let ok = true;
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        ok = (await DeviceOrientationEvent.requestPermission()) === 'granted';
+      }
+      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        try { await DeviceMotionEvent.requestPermission(); } catch (e) {}
+      }
+      return ok;
+    } catch (e) { return false; }
+  }
+
+  _attachOrientation() {
+    if (this._orientationHandler || typeof window === 'undefined') return;
+    this._orientationHandler = (e) => {
+      // Desktop Chrome fires one event with null values — ignore those.
+      if (e.alpha === null || e.beta === null || e.gamma === null) return;
+      // Prefer absolute events (Android) when they arrive, but accept plain ones (iOS).
+      this.setOrientation(e.alpha, e.beta, e.gamma);
+    };
+    window.addEventListener('deviceorientationabsolute', this._orientationHandler);
+    window.addEventListener('deviceorientation', this._orientationHandler);
+  }
+  _detachOrientation() {
+    if (!this._orientationHandler || typeof window === 'undefined') return;
+    window.removeEventListener('deviceorientationabsolute', this._orientationHandler);
+    window.removeEventListener('deviceorientation', this._orientationHandler);
+    this._orientationHandler = null;
+  }
+
+  /* Feed a new orientation sample (also used by the tests and the laptop simulator). */
+  setOrientation(alpha, beta, gamma, screenAngle) {
+    if (screenAngle === undefined) {
+      screenAngle = (typeof screen !== 'undefined' && screen.orientation && typeof screen.orientation.angle === 'number') ? screen.orientation.angle : 0;
+    }
+    this._screenAngle = screenAngle;
+    this.R = orientationMatrix(alpha, beta, gamma, screenAngle);
+    this.hasSensor = true;
+    this.lastEventTs = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  }
+
+  /* Laptop testing: drag on the viewfinder to look around. */
+  enableSimulator(el) {
+    if (this._simEl) return;
+    this._simEl = el; this.simulated = true;
+    const s = this._sim;
+    const apply = () => {   // build a matrix looking at (yaw,pitch) with the phone upright: alpha=-yaw, beta=90+pitch, gamma=0
+      this.R = orientationMatrix(wrap360(-s.yaw), 90 + s.pitch, 0, 0);
+      this.hasSensor = true; this.lastEventTs = performance.now();
+    };
+    apply();
+    el.addEventListener('pointerdown', (e) => { s.dragging = true; s.lx = e.clientX; s.ly = e.clientY; });
+    window.addEventListener('pointerup', () => { s.dragging = false; });
+    window.addEventListener('pointermove', (e) => {
+      if (!s.dragging) return;
+      s.yaw = wrap360(s.yaw + (e.clientX - s.lx) * 0.25);
+      s.pitch = Math.max(-85, Math.min(85, s.pitch - (e.clientY - s.ly) * 0.25));
+      s.lx = e.clientX; s.ly = e.clientY; apply();
+    });
+  }
+
+  /* ---- mapping lifecycle ---- */
+  async startMapping() {
+    const granted = await this.requestMotionPermission();
+    this._attachOrientation();
+    this._updateGeometry();
+
+    const resuming = this.state === 'PAUSED' && this.spatialMap.startedAt;
+    if (!resuming) {
+      this.spatialMap = makeEmptySpatialMap();
+      this._buildGrid();
+      this.spatialMap.startedAt = Date.now();
+      this.activeSeconds = 0; this.extensions = 0;
+      this.targetSeconds = SCANNER_CONFIG.MAPPING_TARGET_SECONDS;
+      this.startYaw = null;
+      this.previousCapturePose = null;
+      this.stats = { mappedFrames: 0, acceptedFrames: 0, rejectedFrames: 0, lastCaptureReason: '—', lastSharpness: 0 };
+    }
+    this.deadlineReached = null;
+    this._lastUpdateTs = 0; this._prevFwd = null;
+    this.state = 'MAPPING';
+    this.spatialMap.trackingState = this.hasSensor ? 'tracking' : 'initializing';
+    return granted;
+  }
+
+  pause() { if (this.state === 'MAPPING') this.state = 'PAUSED'; }
+  canResume() { return this.state === 'PAUSED' && !!this.spatialMap.startedAt; }
+  beginCapturing() { this.spatialMap.ready = true; this.state = 'CAPTURING'; }
+
+  /* Forward vector of the camera in earth coordinates */
+  forward() { return this.R ? mulVec(this.R, [0, 0, -1]) : [0, 1, 0]; }
+
+  /* Project a dome direction (relative yaw/pitch, degrees) to screen pixels using the CURRENT orientation.
+     Returns null when the point is behind the camera. */
+  project(relYaw, pitch) {
+    if (!this.R) return null;
+    const absYaw = (this.startYaw || 0) + relYaw;
+    const d = dirFromYawPitch(absYaw, pitch);
+    const v = mulVecT(this.R, d);          // earth -> camera/screen frame (x right, y up, camera looks down -z)
+    if (v[2] > -0.05) return { behind: true, vx: v[0], vy: v[1], vz: v[2] };
+    const f = this.focalPx;
+    return { behind: false, x: this.viewW / 2 + f * (v[0] / -v[2]), y: this.viewH / 2 - f * (v[1] / -v[2]), vx: v[0], vy: v[1], vz: v[2] };
+  }
+
+  /* ---- one update step, called once per animation frame from the AR canvas loop ---- */
+  update(nowMs) {
+    if (!this.R) { this.spatialMap.trackingState = this.state === 'IDLE' ? 'initializing' : 'lost'; return; }
+    const dt = this._lastUpdateTs ? Math.min(0.1, (nowMs - this._lastUpdateTs) / 1000) : 0;
+    this._lastUpdateTs = nowMs;
+
+    const f = this.forward();
+    const absYaw = wrap360(Math.atan2(f[0], f[1]) * R2D);
+    const pitch = Math.asin(Math.max(-1, Math.min(1, f[2]))) * R2D;
+    if (this.startYaw === null) this.startYaw = absYaw;     // FRONT = the direction you were facing at first
+    if (this.state === 'IDLE') this.startYaw = absYaw;      // keep re-basing until the scan starts
+    this.viewYaw = wrap360(absYaw - this.startYaw);
+    this.viewPitch = pitch;
+
+    if (this._prevFwd && dt > 0) {
+      const dot = Math.max(-1, Math.min(1, f[0] * this._prevFwd[0] + f[1] * this._prevFwd[1] + f[2] * this._prevFwd[2]));
+      const inst = (Math.acos(dot) * R2D) / dt;
+      this.speedDegS = this.speedDegS * 0.7 + inst * 0.3;   // smoothed
+    }
+    this._prevFwd = f;
+
+    // tracking quality: sensors alive and not thrashing
+    const fresh = (typeof performance !== 'undefined' ? performance.now() : nowMs) - this.lastEventTs < 1000 || this.simulated;
+    this.trackingQuality = !fresh ? 0.1 : (this.speedDegS > SCANNER_CONFIG.MAX_SPEED_DEG_S ? 0.5 : 0.95);
+    this.spatialMap.trackingState = this.trackingQuality > 0.7 ? 'tracking' : (this.trackingQuality > 0.3 ? 'limited' : 'lost');
+    this.currentPose.rotation = matToQuaternion(this.R);
+
+    if (this.state === 'MAPPING' || this.state === 'CAPTURING') {
+      this._creditCells(dt);
+      this.stats.mappedFrames++;
+    }
+    if (this.state === 'MAPPING') {
+      this.activeSeconds += dt;
+      this.spatialMap.duration = this.activeSeconds;
+    }
+    this._recomputeCoverage();
+    this._checkDeadline();
+
+    // legacy sync for the compass widget
+    dirIndex = this.viewYaw < 45 || this.viewYaw >= 315 ? 0 : this.viewYaw < 135 ? 1 : this.viewYaw < 225 ? 2 : 3;
+    framePerDir = Math.round([this.spatialMap.coverage.front, this.spatialMap.coverage.right, this.spatialMap.coverage.back, this.spatialMap.coverage.left][dirIndex] * FRAMES_PER_DIR);
+
+    if (typeof this.onUpdate === 'function') this.onUpdate(this);
+  }
+
+  /* Indices of dome cells whose centre is currently inside the on-screen scan zone (the corner brackets). */
+  _cellsInZone(zx = SCANNER_CONFIG.ZONE_X, zy = SCANNER_CONFIG.ZONE_Y) {
+    const out = [];
+    const halfW = (this.viewW / 2) * zx, halfH = (this.viewH / 2) * zy;
+    const cx = this.viewW / 2, cy = this.viewH / 2;
+    const n = this.cols * this.rows;
+    for (let i = 0; i < n; i++) {
+      const c = this.cellYawPitch(i);
+      if (Math.abs(wrap180(c.yaw - this.viewYaw)) > 60 || Math.abs(c.pitch - this.viewPitch) > 70) continue;   // cheap pre-filter
+      const p = this.project(c.yaw, c.pitch);
+      if (!p || p.behind) continue;
+      if (Math.abs(p.x - cx) <= halfW && Math.abs(p.y - cy) <= halfH) out.push(i);
+    }
+    return out;
+  }
+
+  /* Credit every cell inside the scan zone, but only while moving slowly enough to avoid motion blur. */
+  _creditCells(dt) {
+    if (this.spatialMap.trackingState === 'lost' || this.speedDegS > SCANNER_CONFIG.MAX_SPEED_DEG_S || dt <= 0) return;
+    const cells = this.spatialMap.cells;
+    const gain = dt / SCANNER_CONFIG.DWELL_SECONDS;
+    for (const i of this._cellsInZone()) if (cells[i] < 1) cells[i] = Math.min(1, cells[i] + gain);
+  }
+
+  _recomputeCoverage() {
+    const cells = this.spatialMap.cells, cols = this.cols, rows = this.rows;
+    const q = { front: [0, 0], right: [0, 0], back: [0, 0], left: [0, 0] };
+    let total = 0, done = 0;
+    for (let i = 0; i < cells.length; i++) {
+      const yaw = this.cellYawPitch(i).yaw;
+      const key = yaw < 45 || yaw >= 315 ? 'front' : yaw < 135 ? 'right' : yaw < 225 ? 'back' : 'left';
+      const v = this.layer(i);
+      q[key][0] += v; q[key][1] += 1;
+      done += v; total += 1;
+    }
+    const cov = this.spatialMap.coverage;
+    for (const k of ['front', 'right', 'back', 'left']) cov[k] = q[k][1] ? q[k][0] / q[k][1] : 0;
+    // top / bottom rows (for the debug panel & upload metadata)
+    let top = 0, bot = 0;
+    for (let c = 0; c < cols; c++) { top += this.layer((rows - 1) * cols + c); bot += this.layer(c); }
+    cov.top = top / cols; cov.bottom = bot / cols;
+    this.totalCoverage = total ? done / total : 0;
+    this.spatialMap.mapQuality = Math.max(0, Math.min(1, this.totalCoverage * 0.75 + this.trackingQuality * 0.25 * Math.min(1, this.totalCoverage * 3)));
+  }
+
+  _checkDeadline() {
+    if (this.state !== 'MAPPING') return;
+    const C = SCANNER_CONFIG;
+    const cov = this.totalCoverage;
+    if (cov >= C.EARLY_FINISH_COVERAGE && this.activeSeconds >= 5) {
+      this.spatialMap.ready = true; this.state = 'MAP_READY'; this.deadlineReached = 'complete'; return;
+    }
+    if (this.activeSeconds >= this.targetSeconds) {
+      if (cov >= C.MIN_ACCEPT_COVERAGE || this.extensions >= C.MAX_EXTENSIONS) {
+        this.spatialMap.ready = true; this.state = 'MAP_READY'; this.deadlineReached = 'complete';
+      } else {
+        this.extensions++; this.targetSeconds += C.EXTEND_SECONDS; this.deadlineReached = 'extended';
+      }
+    }
+  }
+
+  /* ---- guidance: where should the user point the camera next? ---- */
+  nextTarget() {
+    const n = this.cols * this.rows;
+    let best = -1, bestScore = Infinity;
+    for (let i = 0; i < n; i++) {
+      const v = this.layer(i);
+      if (v >= 0.999) continue;
+      const c = this.cellYawPitch(i);
+      const dy = wrap180(c.yaw - this.viewYaw), dp = c.pitch - this.viewPitch;
+      const score = Math.hypot(dy, dp * 1.2) - v * 5;   // nearest gap, slight preference for half-finished cells
+      if (score < bestScore) { bestScore = score; best = i; }
+    }
+    if (best < 0) return null;
+    const c = this.cellYawPitch(best);
+    return { index: best, yaw: c.yaw, pitch: c.pitch, dYaw: wrap180(c.yaw - this.viewYaw), dPitch: c.pitch - this.viewPitch };
+  }
+
+  guidanceText() {
+    if (!this.hasSensor) return 'No motion sensors — use a phone over HTTPS';
+    if (this.speedDegS > SCANNER_CONFIG.MAX_SPEED_DEG_S) return 'SLOW DOWN — moving too fast';
+    const t = this.nextTarget();
+    if (!t) return 'All areas scanned';
+    const parts = [];
+    if (Math.abs(t.dYaw) >= 8) parts.push(`${t.dYaw > 0 ? 'RIGHT' : 'LEFT'} ${Math.round(Math.abs(t.dYaw))}°`);
+    if (Math.abs(t.dPitch) >= 8) parts.push(`${t.dPitch > 0 ? 'UP' : 'DOWN'} ${Math.round(Math.abs(t.dPitch))}°`);
+    return parts.length ? 'TURN ' + parts.join(' · ') : 'HOLD STEADY — scanning here';
+  }
+
+  /* ---- capture decision (auto mode) ---- */
+  shouldCaptureAuto() {
+    if (this.spatialMap.trackingState === 'lost') return { capture: false, reason: 'TRACKING_LOST' };
+    if (this.speedDegS > SCANNER_CONFIG.CAPTURE_MAX_SPEED_DEG_S) return { capture: false, reason: 'MOVING_TOO_FAST' };
+    if (!this.previousCapturePose) return { capture: true, reason: 'FIRST_FRAME' };
+    const q0 = this.previousCapturePose.rotation, q1 = this.currentPose.rotation;
+    const dot = Math.max(-1, Math.min(1, q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w));
+    const rotationDeg = Math.acos(Math.abs(dot)) * 2 * R2D;
+    if (rotationDeg < SCANNER_CONFIG.CAPTURE_MIN_ROT_DEG) return { capture: false, reason: 'INSUFFICIENT_POSE_CHANGE' };
+    const hasNewArea = this._cellsInZone(SCANNER_CONFIG.PHOTO_ZONE_X, SCANNER_CONFIG.PHOTO_ZONE_Y).some((i) => this.photoCells[i] === 0);
+    if (!hasNewArea) return { capture: false, reason: 'NO_NEW_AREA' };
+    return { capture: true, reason: 'NEW_AREA' };
+  }
+  shouldCaptureFrame() { return this.shouldCaptureAuto(); }   // backward compatible name
+
+  markCaptured(pose) {
+    this.previousCapturePose = JSON.parse(JSON.stringify(pose));
+    this.stats.acceptedFrames++;
+    for (const i of this._cellsInZone(SCANNER_CONFIG.PHOTO_ZONE_X, SCANNER_CONFIG.PHOTO_ZONE_Y)) this.photoCells[i] = Math.min(255, this.photoCells[i] + 1);
+  }
+  markRejected() { this.stats.rejectedFrames++; }
+
+  /* Full reset for "scan another". */
+  reset() {
+    this.stop();
+    this.spatialMap = makeEmptySpatialMap();
+    this._buildGrid();
+    this.previousCapturePose = null;
+    this.startYaw = null; this.activeSeconds = 0; this.extensions = 0;
+    this.targetSeconds = SCANNER_CONFIG.MAPPING_TARGET_SECONDS;
+    this.totalCoverage = 0;
+    this.stats = { mappedFrames: 0, acceptedFrames: 0, rejectedFrames: 0, lastCaptureReason: '—', lastSharpness: 0 };
+  }
+
+  stop() {
+    this.state = 'IDLE';
+    this._detachOrientation();
+    this._prevFwd = null; this._lastUpdateTs = 0;
+  }
+
+  getHudSnapshot() {
+    return {
+      levelLabel: this.levelLabel,
+      state: this.state,
+      trackingState: this.spatialMap.trackingState,
+      depth: 'UNAVAILABLE',
+      coveragePct: Math.round((this.totalCoverage || 0) * 100),
+      qualityPct: Math.round(this.spatialMap.mapQuality * 100),
+    };
+  }
+  _log(msg) { console.log('[SpatialScanner]', msg); }
+}
+
+function eulerToQuaternion(alphaDeg, betaDeg, gammaDeg) {
+  const a = (alphaDeg || 0) * Math.PI / 180 / 2;
+  const b = (betaDeg || 0) * Math.PI / 180 / 2;
+  const g = (gammaDeg || 0) * Math.PI / 180 / 2;
+  const cz = Math.cos(a), sz = Math.sin(a);
+  const cx = Math.cos(b), sx = Math.sin(b);
+  const cy = Math.cos(g), sy = Math.sin(g);
+  return {
+    w: cz * cx * cy + sz * sx * sy,
+    x: cz * sx * cy - sz * cx * sy,
+    y: cz * cx * sy + sz * sx * cy,
+    z: sz * cx * cy - cz * sx * sy,
+  };
+}
+
+/* Basic sharpness estimate: variance of a Sobel-ish gradient over a downsampled canvas.
+   Higher = sharper. Also used to reject near-duplicate / extremely dark / overexposed frames. */
+function estimateFrameQuality(canvas) {
+  const w = 96, h = 72;
+  if (!estimateFrameQuality._c) {
+    estimateFrameQuality._c = document.createElement('canvas');
+    estimateFrameQuality._c.width = w; estimateFrameQuality._c.height = h;
+  }
+  const c = estimateFrameQuality._c;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(canvas, 0, 0, w, h);
+  const data = ctx.getImageData(0, 0, w, h).data;
+  const gray = new Float32Array(w * h);
+  let sum = 0;
+  for (let i = 0; i < w * h; i++) {
+    const o = i * 4;
+    const v = 0.299 * data[o] + 0.587 * data[o + 1] + 0.114 * data[o + 2];
+    gray[i] = v; sum += v;
+  }
+  const mean = sum / (w * h);
+
+  let gradSum = 0, gradSqSum = 0, n = 0;
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      const gx = gray[i + 1] - gray[i - 1];
+      const gy = gray[i + w] - gray[i - w];
+      const g = Math.abs(gx) + Math.abs(gy);
+      gradSum += g; gradSqSum += g * g; n++;
+    }
+  }
+  const gradMean = gradSum / n;
+  const variance = (gradSqSum / n) - (gradMean * gradMean);
+  const sharpness = Math.max(0, Math.min(100, variance / 6));
+
+  return {
+    sharpness,
+    tooDark: mean < 22,
+    overexposed: mean > 236,
+    grayHash: gray,
+  };
+}
+
+/* Reject near-duplicate frames by comparing tiny luminance hashes. */
+function framesAreNearDuplicate(hashA, hashB) {
+  if (!hashA || !hashB || hashA.length !== hashB.length) return false;
+  let diff = 0;
+  for (let i = 0; i < hashA.length; i++) diff += Math.abs(hashA[i] - hashB[i]);
+  return (diff / hashA.length) < 1.2;
+}
+
+const scanner = new SpatialScanner();
+let lastAcceptedHash = null;
 
 /* ══════════════════════════════════════════════════════════════
    AUDIO / HAPTIC
@@ -2013,7 +2860,6 @@ function playSuccess() {
 }
 function haptic(p='light') {
   if ('vibrate' in navigator) {
-    ({ light:[15], medium:[25,10,25], heavy:[60] }[p] || [15]);
     navigator.vibrate({ light:[15], medium:[25,10,25], heavy:[60] }[p] || [15]);
   }
 }
@@ -2031,10 +2877,11 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 ══════════════════════════════════════════════════════════════ */
 function selectTarget(t) {
   scanTarget = t;
+  scanner.setScanMode(t);
   playClick(); haptic('light');
   document.getElementById('cardBuilding').classList.toggle('selected', t==='building');
   document.getElementById('cardObject').classList.toggle('selected', t==='object');
-  document.getElementById('camModeBadge').textContent = (t==='building' ? 'AUTO · BLDG' : 'AUTO · 360°');
+  document.getElementById('camModeBadge').textContent = (t==='building' ? 'MAP · BLDG' : 'MAP · 360°');
   setTimeout(() => {
     document.getElementById('launchSection').scrollIntoView({ behavior:'smooth', block:'start' });
   }, 260);
@@ -2050,37 +2897,134 @@ async function openCamera() {
   currentScanId = `survey_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}_`;
 
   capturedFrames = [];
+  scanner.setScanMode(scanTarget);
   dirIndex = 0; framePerDir = 0;
+  lastAcceptedHash = null;
   updateCount();
-  autoRunning = false;
   setShutterIdle();
+  document.getElementById('hudState').textContent = 'INITIALIZING';
+
+  // Reset 2-Phase state & UI indicators
+  currentPhase = 'STANDBY';
+  mappingRemainingSec = 30.0;
+  isAutoCaptureActive = false;
+  scannedSectorsNotified = { front: false, right: false, back: false, left: false };
+
+  const border = document.getElementById('scannerActiveBorder');
+  if (border) border.classList.remove('active-scanning');
+  const laser = document.getElementById('shiningLaserSweep');
+  if (laser) laser.classList.remove('active');
+  const statusInd = document.getElementById('scanStatusIndicator');
+  if (statusInd) {
+    statusInd.className = 'scan-status-indicator standby';
+    document.getElementById('scanStatusText').textContent = 'STANDBY · TAP START';
+  }
+  const mappingCard = document.getElementById('mapping30sCard');
+  if (mappingCard) mappingCard.style.display = 'none';
+  const autoBtn = document.getElementById('autoCaptureToggleBtn');
+  if (autoBtn) autoBtn.style.display = 'none';
+  const autoCount = document.getElementById('autoCountdown');
+  if (autoCount) autoCount.style.display = 'block';
+  document.getElementById('nextShotTimer').textContent = 'TAP TO START 30s AR SCAN';
+  document.getElementById('shutterLabel').innerHTML = 'START<br>30s AR';
 
   captureCanvas = document.createElement('canvas');
 
   const overlay = document.getElementById('cameraOverlay');
   overlay.classList.add('active','overlay-enter');
 
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: cameraFacing, width:{ideal:1280}, height:{ideal:720} },
-      audio: false
-    });
-    const vid = document.getElementById('videoEl');
-    vid.srcObject = mediaStream;
-    vid.onloadedmetadata = () => {
-      startARCanvas();
-      showToast('Tap the button to start auto-scan!', 'success');
-    };
-  } catch(err) {
-    showToast('Camera access denied', 'error');
+  const vid = document.getElementById('videoEl');
+  vid.setAttribute('autoplay', '');
+  vid.setAttribute('muted', '');
+  vid.setAttribute('playsinline', '');
+  vid.setAttribute('webkit-playsinline', '');
+  vid.muted = true;
+  vid.playsInline = true;
+
+  // Click-to-unpause fallback if browser suspended autoplay
+  overlay.onclick = () => {
+    if (vid && vid.paused) {
+      vid.play().catch(() => {});
+    }
+  };
+
+  // Stop previous tracks cleanly before opening new stream
+  if (mediaStream) {
+    try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+    mediaStream = null;
+  }
+
+  const constraintList = [
+    { video: { facingMode: { ideal: cameraFacing }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+    { video: { facingMode: cameraFacing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+    { video: { facingMode: cameraFacing }, audio: false },
+    { video: true, audio: false }
+  ];
+
+  let stream = null;
+  for (const c of constraintList) {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(c);
+      if (stream) break;
+    } catch (err) {
+      console.warn('[Camera] Constraint failed, falling back:', c, err);
+    }
+  }
+
+  if (!stream) {
+    showToast('Camera access denied or unavailable', 'error');
     closeCamera();
+    return;
+  }
+
+  mediaStream = stream;
+  vid.srcObject = mediaStream;
+
+  // Explicitly call and await vid.play() so video frames render immediately on mobile
+  try {
+    await vid.play();
+  } catch (playErr) {
+    console.warn('[Camera] vid.play() failed:', playErr);
+  }
+
+  let feedStarted = false;
+  const onReady = async () => {
+    if (feedStarted) return;
+    feedStarted = true;
+    try { await vid.play(); } catch(e) {}
+    await scanner.initialize(vid);
+    scanner.onUpdate = refreshSpatialHud;
+    refreshSpatialHud(scanner);
+    startARCanvas();
+    showToast(`Camera active — surface visible`, 'success');
+  };
+
+  if (vid.readyState >= 2) {
+    onReady();
+  } else {
+    vid.onloadeddata = onReady;
+    vid.onloadedmetadata = onReady;
+    vid.addEventListener('canplay', onReady, { once: true });
+    // Safety fallback: if metadata events are delayed, initialize after 350ms
+    setTimeout(() => { if (!feedStarted) onReady(); }, 350);
   }
 }
 
 function closeCamera() {
+  if (mappingTickerInterval) { clearInterval(mappingTickerInterval); mappingTickerInterval = null; }
+  if (autoCaptureIntervalId) { clearInterval(autoCaptureIntervalId); autoCaptureIntervalId = null; }
   stopAutoShutter();
   stopARCanvas();
-  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+  scanner.stop();
+  if (mediaStream) {
+    try { mediaStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+    mediaStream = null;
+  }
+  const vid = document.getElementById('videoEl');
+  if (vid) {
+    vid.pause();
+    vid.srcObject = null;
+  }
   const ov = document.getElementById('cameraOverlay');
   ov.classList.add('overlay-exit');
   setTimeout(() => ov.classList.remove('active','overlay-enter','overlay-exit'), 280);
@@ -2090,117 +3034,432 @@ async function switchCamera() {
   cameraFacing = cameraFacing === 'environment' ? 'user' : 'environment';
   haptic('light');
   stopARCanvas();
-  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+  scanner.stop();
+  if (mediaStream) {
+    try { mediaStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+    mediaStream = null;
+  }
+  const vid = document.getElementById('videoEl');
+  vid.muted = true;
+  vid.playsInline = true;
   try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({ video:{facingMode:cameraFacing}, audio:false });
-    const vid = document.getElementById('videoEl');
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: cameraFacing } },
+      audio: false
+    });
+    mediaStream = stream;
     vid.srcObject = mediaStream;
-    vid.onloadedmetadata = () => startARCanvas();
-  } catch(e) { showToast('Could not switch camera','error'); }
-}
-
-/* ══════════════════════════════════════════════════════════════
-   AUTO-SHUTTER CONTROL
-══════════════════════════════════════════════════════════════ */
-function toggleAutoShutter() {
-  if (!mediaStream) return;
-  if (autoRunning) {
-    stopAutoShutter();
-    showToast('Auto-scan paused', 'info');
-  } else {
-    startAutoShutter();
-    showToast('🔴 Auto-scanning started!', 'success');
-    haptic('medium');
+    try { await vid.play(); } catch (e) {}
+    let ready = false;
+    const onSwitched = async () => {
+      if (ready) return;
+      ready = true;
+      await scanner.initialize(vid);
+      startARCanvas();
+    };
+    if (vid.readyState >= 2) onSwitched();
+    else {
+      vid.onloadeddata = onSwitched;
+      setTimeout(onSwitched, 300);
+    }
+  } catch(e) {
+    showToast('Could not switch camera', 'error');
   }
 }
 
-function startAutoShutter() {
-  autoRunning = true;
-  setShutterCapturing();
 
-  // Animate ring continuously while scanning (spin from 0→full repeatedly)
+/* ══════════════════════════════════════════════════════════════
+   2-PHASE AR/VR SPATIAL SCANNING & SHINING EFFECT CONTROLLER
+   Phase 1: 30-Second AR/VR Environment & Surface Mesh Mapping
+   Phase 2: High-Resolution Survey Photo Capture
+══════════════════════════════════════════════════════════════ */
+let currentPhase = 'STANDBY'; // 'STANDBY' | 'MAPPING_30S' | 'MAP_READY' | 'CAPTURING'
+let mappingRemainingSec = 30.0;
+let mappingTickerInterval = null;
+let isAutoCaptureActive = false;
+let autoCaptureIntervalId = null;
+let scannedSectorsNotified = { front: false, right: false, back: false, left: false };
+
+/* Sleek, non-intrusive scan notification (no blinding flash, no giant badges) */
+function triggerShiningBurst(label = '✓ SCANNED', isBig = false) {
+  // Brief subtle flash on camera viewfinder
+  const fl = document.getElementById('camFlash');
+  if (fl) {
+    fl.style.transition = 'none';
+    fl.style.opacity = '0.35';
+    setTimeout(() => {
+      fl.style.transition = 'opacity 0.2s ease';
+      fl.style.opacity = '0';
+    }, 40);
+  }
+
+  // Mini toast pill at top without obstructing camera
+  const existing = document.querySelector('.scanned-mini-pill');
+  if (existing) existing.remove();
+  const pill = document.createElement('div');
+  pill.className = 'scanned-mini-pill';
+  pill.innerHTML = `<span>✨</span><span>${label}</span>`;
+  const cam = document.getElementById('cameraOverlay');
+  if (cam) cam.appendChild(pill);
+  setTimeout(() => { if (pill.parentNode) pill.remove(); }, 1200);
+
+  if (isBig) {
+    playSuccess();
+    if (typeof haptic === 'function') haptic('medium');
+  } else {
+    playShutter();
+    if (typeof haptic === 'function') haptic('light');
+  }
+}
+
+
+/* Master Shutter Handler */
+function toggleAutoShutter() {
+  if (!mediaStream) return;
+
+  if (currentPhase === 'STANDBY') {
+    start30sMapping();
+  } else if (currentPhase === 'MAPPING_30S') {
+    pauseScanning();
+  } else if (currentPhase === 'MAP_READY') {
+    enterCaptureModeFromModal();
+  } else if (currentPhase === 'CAPTURING') {
+    if (isAutoCaptureActive) {
+      stopAutoCapture();
+    } else {
+      captureSinglePhoto();
+    }
+  }
+}
+
+/* PHASE 1: 30-Second AR/VR Spatial Environment Mapping */
+async function start30sMapping() {
+  const resuming = scanner.canResume();          // pause keeps the map — resume continues where you stopped
+  currentPhase = 'MAPPING_30S';
+  if (!resuming) scannedSectorsNotified = { front: false, right: false, back: false, left: false };
+
+  const border = document.getElementById('scannerActiveBorder');
+  if (border) border.classList.add('active-scanning');
+  const laser = document.getElementById('shiningLaserSweep');
+  if (laser) laser.classList.add('active');
+  const statusInd = document.getElementById('scanStatusIndicator');
+  if (statusInd) {
+    statusInd.className = 'scan-status-indicator active-scanning';
+    document.getElementById('scanStatusText').textContent = '🔴 LIVE AR/VR SCANNING';
+  }
+  const mappingCard = document.getElementById('mapping30sCard');
+  if (mappingCard) mappingCard.style.display = 'flex';
+  document.getElementById('autoCountdown').style.display = 'none';
+  document.getElementById('autoCaptureToggleBtn').style.display = 'none';
+
+  const sb = document.getElementById('shutterBtn');
+  sb.classList.add('capturing');
+  document.getElementById('shutterLabel').innerHTML = 'PAUSE<br>SCAN';
+
   const ring = document.getElementById('shutterRing');
-  ring.style.transition = 'stroke-dashoffset 0.3s linear';
-  ring.style.strokeDashoffset = '0';   // fully filled = active
-  document.getElementById('nextShotTimer').textContent = 'SCANNING…';
+  if (ring) { ring.style.transition = 'stroke-dashoffset 0.1s linear'; }
 
-  // Actual capture interval — 2 frames/sec (500ms)
-  autoTimerId = setInterval(() => {
-    captureFrame();
-  }, autoIntervalMs);
+  playClick();
+  haptic('medium');
+  showToast(resuming ? '▶ Scan resumed' : '🌐 Mapping started — sweep slowly and follow the arrows', 'info');
+
+  // NOTE: must stay the first await so iOS accepts the motion-permission prompt (needs the tap gesture)
+  const granted = await scanner.startMapping();
+  if (granted === false) showToast('Motion access denied — enable "Motion & Orientation" for this site in Safari settings', 'error');
+
+  // Laptop / no-sensor fallback: drag on the viewfinder to look around
+  setTimeout(() => {
+    if (currentPhase === 'MAPPING_30S' && !scanner.hasSensor) {
+      scanner.enableSimulator(document.getElementById('cameraOverlay'));
+      showToast('💻 No motion sensors found — drag on the screen to look around (test mode)', 'info');
+    }
+  }, 1200);
+
+  if (mappingTickerInterval) clearInterval(mappingTickerInterval);
+  mappingTickerInterval = setInterval(() => {
+    if (currentPhase !== 'MAPPING_30S') { clearInterval(mappingTickerInterval); return; }
+
+    // time now comes from the scanner (active time only, pauses excluded, extensions included)
+    const elapsed = scanner.activeSeconds;
+    const target = scanner.targetSeconds;
+    const remaining = Math.max(0, target - elapsed);
+    mappingRemainingSec = remaining;
+    const pct = Math.min(100, (elapsed / target) * 100);
+
+    const secEl = document.getElementById('mappingSecRemaining');
+    if (secEl) secEl.textContent = `${remaining.toFixed(1)}s`;
+    const fillEl = document.getElementById('mappingProgressBarFill');
+    if (fillEl) fillEl.style.width = `${pct}%`;
+    if (ring) ring.style.strokeDashoffset = String(Math.round(245 * (1 - pct / 100)));
+
+    // live "where next" text inside the mapping card
+    const ins = document.getElementById('mappingInstruction');
+    if (ins) ins.textContent = scanner.guidanceText();
+
+    const cov = scanner.spatialMap.coverage;
+    const sectors = [
+      { key: 'front', pill: 'pillFront', label: 'FRONT', covEl: 'covF', val: cov.front },
+      { key: 'right', pill: 'pillRight', label: 'RIGHT', covEl: 'covR', val: cov.right },
+      { key: 'back', pill: 'pillBack', label: 'BACK', covEl: 'covB', val: cov.back },
+      { key: 'left', pill: 'pillLeft', label: 'LEFT', covEl: 'covL', val: cov.left }
+    ];
+    sectors.forEach(s => {
+      const p = Math.round(s.val * 100);
+      const pillEl = document.getElementById(s.pill);
+      if (!pillEl) return;
+      if (p >= 90) {
+        pillEl.classList.add('scanned');
+        pillEl.innerHTML = `✔ ${s.label}: <b>${p}%</b>`;
+        if (!scannedSectorsNotified[s.key]) {
+          scannedSectorsNotified[s.key] = true;
+          triggerShiningBurst(`✨ ${s.label} SECTOR SCANNED!`);
+        }
+      } else {
+        pillEl.classList.remove('scanned');
+        pillEl.innerHTML = `${s.label}: <b id="${s.covEl}">${p}%</b>`;
+      }
+    });
+
+    if (scanner.deadlineReached === 'extended') {
+      scanner.deadlineReached = null;
+      const c = scanner.getHudSnapshot().coveragePct;
+      showToast(`⏱ Only ${c}% covered — +${SCANNER_CONFIG.EXTEND_SECONDS}s to fill the orange gaps`, 'info');
+    }
+    if (scanner.state === 'MAP_READY') {
+      clearInterval(mappingTickerInterval);
+      complete30sMapping();
+    }
+  }, 100);
+}
+
+/* Complete 30-Second Mapping & seamlessly transition to photo capture without any modal */
+function complete30sMapping() {
+  if (mappingTickerInterval) { clearInterval(mappingTickerInterval); mappingTickerInterval = null; }
+  currentPhase = 'CAPTURING';
+  scanner.beginCapturing();     // switches the dome from 'scan progress' to 'photo coverage'
+
+  const laser = document.getElementById('shiningLaserSweep');
+  if (laser) laser.classList.remove('active');
+
+  const mappingCard = document.getElementById('mapping30sCard');
+  if (mappingCard) mappingCard.style.display = 'none';
+
+  const autoCount = document.getElementById('autoCountdown');
+  if (autoCount) autoCount.style.display = 'block';
+  document.getElementById('nextShotTimer').textContent = '📸 SHOOT WHERE THE ARROW POINTS';
+
+  const autoBtn = document.getElementById('autoCaptureToggleBtn');
+  if (autoBtn) autoBtn.style.display = 'flex';
+
+  const statusInd = document.getElementById('scanStatusIndicator');
+  if (statusInd) {
+    statusInd.className = 'scan-status-indicator active-scanning';
+    document.getElementById('scanStatusText').textContent = `📸 CAPTURING (${capturedFrames.length}/45)`;
+  }
+
+  const sb = document.getElementById('shutterBtn');
+  sb.classList.remove('capturing');
+  document.getElementById('shutterLabel').innerHTML = 'TAKE<br>PHOTO';
+
+  playSuccess();
+  if (typeof haptic === 'function') haptic('medium');
+  triggerShiningBurst('30s AR Map Complete!', true);
+  const mapPct = Math.round(scanner.totalCoverage * 100);
+  showToast(mapPct >= 95 ? '✅ Map complete! Now take photos where the arrows point.' : `✅ Map locked at ${mapPct}% — photo mode will guide you to the gaps.`, 'success');
+}
+
+function skipToCaptureMode() {
+  complete30sMapping();
+}
+
+/* PHASE 2: Image Capture Mode (fallback) */
+function enterCaptureModeFromModal() {
+  const modal = document.getElementById('mapCompleteModal');
+  if (modal) modal.classList.remove('active');
+  complete30sMapping();
+}
+
+
+/* Capture Single Photo with Shining Effect */
+function captureSinglePhoto(reason = 'MANUAL') {
+  captureFrame(reason);
+  triggerShiningBurst(`✨ FRAME #${capturedFrames.length} SCANNED`);
+
+  const sb = document.getElementById('shutterBtn');
+  sb.classList.add('flash-ring');
+  setTimeout(() => sb.classList.remove('flash-ring'), 250);
+
+  const statusInd = document.getElementById('scanStatusIndicator');
+  if (statusInd) {
+    document.getElementById('scanStatusText').textContent = `📸 CAPTURING (${capturedFrames.length}/45)`;
+  }
+
+  document.getElementById('nextShotTimer').textContent = `SCANNED #${capturedFrames.length} · TAP FOR NEXT`;
+}
+
+/* Optional Auto-Capture Mode (2 FPS) */
+function toggleAutoCaptureMode() {
+  if (currentPhase !== 'CAPTURING') return;
+
+  isAutoCaptureActive = !isAutoCaptureActive;
+  const btn = document.getElementById('autoCaptureToggleBtn');
+  const sub = document.getElementById('autoCaptureSubText');
+  const laser = document.getElementById('shiningLaserSweep');
+
+  if (isAutoCaptureActive) {
+    if (btn) { btn.style.background = 'rgba(16,185,129,0.3)'; btn.style.color = '#10b981'; btn.style.borderColor = '#10b981'; }
+    if (sub) sub.textContent = 'ON';
+    if (laser) laser.classList.add('active');
+    document.getElementById('shutterLabel').innerHTML = 'STOP<br>AUTO';
+    showToast('Auto-capture on — shoots when you reach a new area', 'info');
+
+    if (autoCaptureIntervalId) clearInterval(autoCaptureIntervalId);
+    // Guided auto-capture: only fires when the view has moved, the phone is steady, and a NEW area is in frame
+    autoCaptureIntervalId = setInterval(() => {
+      if (currentPhase === 'CAPTURING' && isAutoCaptureActive) {
+        const d = scanner.shouldCaptureAuto();
+        scanner.stats.lastCaptureReason = d.reason;
+        if (d.capture) captureSinglePhoto('AUTO');
+      }
+    }, 150);
+  } else {
+    stopAutoCapture();
+  }
+}
+
+function stopAutoCapture() {
+  isAutoCaptureActive = false;
+  if (autoCaptureIntervalId) { clearInterval(autoCaptureIntervalId); autoCaptureIntervalId = null; }
+  const btn = document.getElementById('autoCaptureToggleBtn');
+  const sub = document.getElementById('autoCaptureSubText');
+  const laser = document.getElementById('shiningLaserSweep');
+  if (btn) { btn.style.background = 'rgba(15,23,42,0.7)'; btn.style.color = '#38bdf8'; btn.style.borderColor = 'rgba(56,189,248,0.5)'; }
+  if (sub) sub.textContent = 'OFF';
+  if (laser) laser.classList.remove('active');
+  document.getElementById('shutterLabel').innerHTML = 'TAKE<br>PHOTO';
+}
+
+/* Pause Scanning */
+function pauseScanning() {
+  scanner.pause();
+  if (mappingTickerInterval) { clearInterval(mappingTickerInterval); mappingTickerInterval = null; }
+  if (autoCaptureIntervalId) { clearInterval(autoCaptureIntervalId); autoCaptureIntervalId = null; }
+
+  const border = document.getElementById('scannerActiveBorder');
+  if (border) border.classList.remove('active-scanning');
+
+  const laser = document.getElementById('shiningLaserSweep');
+  if (laser) laser.classList.remove('active');
+
+  const statusInd = document.getElementById('scanStatusIndicator');
+  if (statusInd) {
+    statusInd.className = 'scan-status-indicator standby';
+    document.getElementById('scanStatusText').textContent = '⏸️ SCAN PAUSED';
+  }
+
+  const sb = document.getElementById('shutterBtn');
+  sb.classList.remove('capturing');
+  document.getElementById('shutterLabel').innerHTML = 'RESUME<br>SCAN';
+  document.getElementById('nextShotTimer').textContent = 'PAUSED · TAP TO RESUME';
+  currentPhase = 'STANDBY';
+  showToast('Scan paused', 'info');
 }
 
 function stopAutoShutter() {
-  autoRunning = false;
-  clearInterval(autoTimerId);
-  clearInterval(autoTickerId);
-  autoTimerId = null; autoTickerId = null;
+  pauseScanning();
+  scanner.stop();
   setShutterIdle();
-  const ring = document.getElementById('shutterRing');
-  ring.style.transition = '';
-  ring.style.strokeDashoffset = '245';
-  document.getElementById('nextShotTimer').textContent = 'PAUSED';
 }
 
 function setShutterIdle() {
   const sb = document.getElementById('shutterBtn');
-  sb.classList.remove('capturing');
-  document.getElementById('shutterLabel').innerHTML = 'TAP<br>START';
+  if (sb) sb.classList.remove('capturing');
+  const lbl = document.getElementById('shutterLabel');
+  if (lbl) lbl.innerHTML = currentPhase === 'CAPTURING' ? 'TAKE<br>PHOTO' : 'START<br>30s AR';
 }
+
 function setShutterCapturing() {
   const sb = document.getElementById('shutterBtn');
-  sb.classList.add('capturing');
-  document.getElementById('shutterLabel').innerHTML = 'TAP<br>STOP';
+  if (sb) sb.classList.add('capturing');
+  const lbl = document.getElementById('shutterLabel');
+  if (lbl) lbl.innerHTML = 'PAUSE<br>SCAN';
 }
 
 /* ══════════════════════════════════════════════════════════════
-   CAPTURE A FRAME
+   CAPTURE A FRAME — now stores full metadata (pose, intrinsics,
+   tracking state, depth flag, coverage region, sharpness, overlap)
+   at the camera's native resolution instead of a fixed canvas size.
 ══════════════════════════════════════════════════════════════ */
-function captureFrame() {
+function captureFrame(reason, precomputedQuality) {
   const vid = document.getElementById('videoEl');
   if (!vid.srcObject || vid.readyState < 2) return;
+  if (capturedFrames.length >= SCANNER_CONFIG.MAX_ACCEPTED_FRAMES) return;
 
   haptic('light');
   playShutter();
 
-  // White flash
   const fl = document.getElementById('camFlash');
   fl.style.transition = ''; fl.style.opacity = '0.6';
   setTimeout(() => { fl.style.transition = 'opacity 0.2s'; fl.style.opacity = '0'; }, 40);
 
-  // Shutter ring pulse
   const sb = document.getElementById('shutterBtn');
   sb.classList.add('flash-ring');
   setTimeout(() => sb.classList.remove('flash-ring'), 300);
 
-  captureCanvas.width = vid.videoWidth || 1280;
-  captureCanvas.height = vid.videoHeight || 720;
-  captureCanvas.getContext('2d').drawImage(vid, 0, 0);
+  // Native camera resolution — full high clarity for final laptop inspection
+  const track = mediaStream && mediaStream.getVideoTracks()[0];
+  const settings = track ? track.getSettings() : {};
+  captureCanvas.width = settings.width || vid.videoWidth || 1920;
+  captureCanvas.height = settings.height || vid.videoHeight || 1080;
+  captureCanvas.getContext('2d').drawImage(vid, 0, 0, captureCanvas.width, captureCanvas.height);
+
+  const quality = precomputedQuality || estimateFrameQuality(captureCanvas);
+  lastAcceptedHash = quality.grayHash;
 
   captureCanvas.toBlob(blob => {
     const url = URL.createObjectURL(blob);
-    capturedFrames.push({ blob, url, dir: DIRECTIONS[dirIndex] });
+    const pose = JSON.parse(JSON.stringify(scanner.currentPose));
+    const region = ['FRONT','RIGHT-SIDE','BACK','LEFT-SIDE'][dirIndex] || 'FRONT';
+
+    const frameRecord = {
+      id: capturedFrames.length + 1,
+      blob, url,
+      timestamp: Date.now(),
+      pose,
+      intrinsics: scanner.intrinsics,
+      trackingState: scanner.spatialMap.trackingState,
+      depthAvailable: scanner.capabilities.depthSensing,
+      coverageRegion: region,
+      viewYaw: Math.round(scanner.viewYaw * 10) / 10,
+      viewPitch: Math.round(scanner.viewPitch * 10) / 10,
+      sharpnessScore: Math.round(quality.sharpness),
+      overlapScore: scanner.previousCapturePose ? null : 0,
+      dir: region,           // kept for the existing sector-map drawing code
+      captureReason: reason || 'MANUAL',
+    };
+
+    capturedFrames.push(frameRecord);
+    scanner.markCaptured(pose);
     updateCount();
 
-    framePerDir++;
-    if (framePerDir >= FRAMES_PER_DIR && dirIndex < DIRECTIONS.length - 1) {
-      dirIndex++;
-      framePerDir = 0;
+    if (capturedFrames.length % 8 === 0) {
       haptic('heavy');
-      showToast(`📍 Move to: ${DIRECTIONS[dirIndex]}`, 'success');
+      const snap = scanner.getHudSnapshot();
+      showToast(`📸 ${capturedFrames.length} frames · coverage ${snap.coveragePct}%`, 'success');
     }
 
-    // Auto-finish when target coverage reached
-    if (capturedFrames.length >= TOTAL_TARGET) {
+    const snap = scanner.getHudSnapshot();
+    if (snap.coveragePct >= 95 && capturedFrames.length >= 20) {
       stopAutoShutter();
-      showToast('✅ Full coverage! Tap ✓ to review', 'success');
+      showToast('✅ Strong coverage reached! Tap ✓ to review', 'success');
       haptic('heavy');
     }
-  }, 'image/jpeg', 0.88);
+  }, 'image/jpeg', 0.95);
+
 }
 
 function updateCount() {
-  const pct = Math.min(100, Math.round((capturedFrames.length / TOTAL_TARGET) * 100));
+  const pct = scanner.getHudSnapshot().coveragePct;      // real coverage, not frames/60
   document.getElementById('camCount').textContent = pct + '%';
 }
 
@@ -2214,28 +3473,116 @@ function finishCapture() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   AR CANVAS — drawn directly on the video every frame
+   SPATIAL HUD — reflects the SpatialScanner's real state every tick
+══════════════════════════════════════════════════════════════ */
+function refreshSpatialHud(s) {
+  const snap = s.getHudSnapshot();
+  const set = (id, val, color) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.textContent !== String(val)) el.textContent = val;
+    if (color) el.style.color = color;
+  };
+  set('hudLevel', snap.levelLabel.split('·')[0].trim());
+  set('hudTracking', snap.trackingState.toUpperCase(),
+    snap.trackingState === 'tracking' ? '#10b981' : snap.trackingState === 'limited' ? '#f59e0b' : '#ef4444');
+  set('hudDepth', snap.depth, snap.depth === 'AVAILABLE' ? '#10b981' : '#94a3b8');
+  set('hudCoverage', snap.coveragePct + '%', snap.coveragePct >= 90 ? '#10b981' : '#38bdf8');
+  set('hudQuality', snap.qualityPct + '%', snap.qualityPct >= 90 ? '#10b981' : '#38bdf8');
+  set('hudState', snap.state);
+  set('camCount', snap.coveragePct + '%');
+
+  if (snap.state === 'MAPPING') {
+    // Handled by 30s mapping ticker
+  } else if (snap.state === 'MAP_READY') {
+    document.getElementById('camModeBadge').textContent = 'MAP READY';
+    document.getElementById('nextShotTimer').textContent = '30s MAP LOCKED — READY FOR PHOTOS';
+  }
+  refreshDebugPanel();
+}
+
+function handleDebugTap() {
+  debugTapCount++;
+  clearTimeout(debugTapTimer);
+  debugTapTimer = setTimeout(() => { debugTapCount = 0; }, 700);
+  if (debugTapCount >= 3) {
+    debugTapCount = 0;
+    debugVisible = !debugVisible;
+    document.getElementById('debugPanel').style.display = debugVisible ? 'block' : 'none';
+    refreshDebugPanel();
+  }
+}
+
+function refreshDebugPanel() {
+  if (!debugVisible) return;
+  const el = document.getElementById('debugPanel');
+  if (!el) return;
+  const s = scanner;
+  const track = mediaStream && mediaStream.getVideoTracks()[0];
+  const settings = track ? track.getSettings() : {};
+  el.textContent =
+`LEVEL           ${s.levelLabel}
+STATE           ${s.state}
+PHASE           ${currentPhase}
+TRACKING        ${s.spatialMap.trackingState}
+DEPTH           ${s.capabilities.depthSensing ? 'AVAILABLE' : 'UNAVAILABLE/ESTIMATED'}
+CAMERA RES      ${settings.width || '-'}x${settings.height || '-'}
+FEATURE PTS     ${s.featurePointCount}
+MAPPED FRAMES   ${s.stats.mappedFrames}
+ACCEPTED        ${s.stats.acceptedFrames}
+REJECTED        ${s.stats.rejectedFrames}
+MAP COVERAGE    F:${Math.round(s.spatialMap.coverage.front*100)}% R:${Math.round(s.spatialMap.coverage.right*100)}% B:${Math.round(s.spatialMap.coverage.back*100)}% L:${Math.round(s.spatialMap.coverage.left*100)}%
+MAP QUALITY     ${Math.round(s.spatialMap.mapQuality*100)}%
+POSE XYZ        ${s.currentPose.position.x.toFixed(3)}, ${s.currentPose.position.y.toFixed(3)}, ${s.currentPose.position.z.toFixed(3)}
+ROTATION (quat) ${s.currentPose.rotation.x.toFixed(2)}, ${s.currentPose.rotation.y.toFixed(2)}, ${s.currentPose.rotation.z.toFixed(2)}, ${s.currentPose.rotation.w.toFixed(2)}
+LAST REASON     ${s.stats.lastCaptureReason}
+LAST SHARPNESS  ${s.stats.lastSharpness}
+NETWORK         ${navigator.onLine ? 'ONLINE' : 'OFFLINE'}`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AR / SPATIAL-MAP CANVAS — drawn over the video every frame.
+   Same visual language as before (corner brackets, sector compass,
+   direction arrow) but every value now comes from the real
+   SpatialScanner state instead of a scripted 4-direction timer.
 ══════════════════════════════════════════════════════════════ */
 function startARCanvas() {
   stopARCanvas();
   const c = document.getElementById('arCanvas');
   const vid = document.getElementById('videoEl');
+  let lastGeoKey = '';
 
-  function frame() {
-    const W = vid.clientWidth, H = vid.clientHeight;
+  function frame(ts) {
+    const W = vid.clientWidth || window.innerWidth || 360;
+    const H = vid.clientHeight || window.innerHeight || 640;
     if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
+
+    // keep the projection geometry in sync with the real video / screen size
+    const geoKey = `${W}x${H}:${vid.videoWidth}x${vid.videoHeight}`;
+    if (geoKey !== lastGeoKey) { lastGeoKey = geoKey; scanner._updateGeometry(); }
+
+    // ONE loop drives everything: sensors -> map -> drawing
+    scanner.update(ts || performance.now());
+
     const ctx = c.getContext('2d');
     ctx.clearRect(0, 0, W, H);
 
+    drawDomeOverlay(ctx, W, H);
     drawScanZone(ctx, W, H);
     drawSectorMap(ctx, W, H);
-    drawDirectionArrow(ctx, W, H);
+    drawGuidance(ctx, W, H);
     drawCornerHUD(ctx, W, H);
 
     arRafId = requestAnimationFrame(frame);
   }
   arRafId = requestAnimationFrame(frame);
 }
+
+
+function drawShiningFeaturePoints(ctx, W, H) {
+  // Deliberately no-op to keep viewfinder clean and 100% lag-free
+}
+
 
 function stopARCanvas() {
   if (arRafId) { cancelAnimationFrame(arRafId); arRafId = null; }
@@ -2245,20 +3592,16 @@ function stopARCanvas() {
 
 /* ── 1. CORNER HUD brackets ── */
 function drawCornerHUD(ctx, W, H) {
-  const L = 28, T = 3, cx = 0.14*W, cy = 0.28*H, rw = W*0.72, rh = H*0.44;
+  const L = 28, T = 3, zx = SCANNER_CONFIG.ZONE_X, zy = SCANNER_CONFIG.ZONE_Y;
+  const cx = W*(1-zx)/2, cy = H*(1-zy)/2, rw = W*zx, rh = H*zy;   // exactly the area that earns scan credit
   ctx.strokeStyle = 'rgba(56,189,248,0.75)';
   ctx.lineWidth = T;
   ctx.lineCap = 'round';
-  // top-left
   strokeLines(ctx, [[cx,cy+L],[cx,cy],[cx+L,cy]]);
-  // top-right
   strokeLines(ctx, [[cx+rw-L,cy],[cx+rw,cy],[cx+rw,cy+L]]);
-  // bottom-left
   strokeLines(ctx, [[cx,cy+rh-L],[cx,cy+rh],[cx+L,cy+rh]]);
-  // bottom-right
   strokeLines(ctx, [[cx+rw-L,cy+rh],[cx+rw,cy+rh],[cx+rw,cy+rh-L]]);
 
-  // scan line inside the zone
   const t = (Date.now() % 2200) / 2200;
   const sy = cy + t * rh;
   const grad = ctx.createLinearGradient(cx, sy, cx+rw, sy);
@@ -2279,150 +3622,217 @@ function strokeLines(ctx, pts) {
   ctx.stroke();
 }
 
-/* ── 2. SCAN ZONE label ── */
+/* ── 2. SCAN ZONE label — now shows real phase + quality, not a fixed direction ── */
 function drawScanZone(ctx, W, H) {
-  const label = DIRECTIONS[dirIndex];
-  const cx = 0.14*W, cy = 0.28*H;
+  const zx = SCANNER_CONFIG.ZONE_X, zy = SCANNER_CONFIG.ZONE_Y;
+  const cx = W*(1-zx)/2, cy = H*(1-zy)/2, rw = W*zx, rh = H*zy;
+  const snap = scanner.getHudSnapshot();
+  const label = snap.state === 'MAPPING' ? `MAPPING · ${snap.coveragePct}% COVERED`
+    : snap.state === 'PAUSED' ? `PAUSED · ${snap.coveragePct}% COVERED`
+    : snap.state === 'MAP_READY' ? 'MAP LOCKED'
+    : snap.state === 'CAPTURING' ? `PHOTOS · ${snap.coveragePct}% COVERED`
+    : 'ALIGN TARGET IN THE BOX · TAP START';
 
-  // label above zone
-  ctx.font = 'bold 13px "JetBrains Mono", monospace';
+  const by = cy + rh + 18;
+  ctx.font = 'bold 12px "JetBrains Mono", monospace';
   ctx.textAlign = 'left';
-  ctx.fillStyle = 'rgba(56,189,248,0.90)';
-  ctx.fillText('SCAN TARGET: ' + label, cx, cy - 10);
+  ctx.fillStyle = 'rgba(56,189,248,0.95)';
+  ctx.fillText(label, cx, by);
 
-  // coverage bar
-  const barW = W * 0.72;
-  const filled = Math.min(1, capturedFrames.length / TOTAL_TARGET);
-  ctx.fillStyle = 'rgba(255,255,255,0.08)';
-  ctx.beginPath(); roundRect(ctx, cx, cy - 6, barW, 3, 2); ctx.fill();
-  ctx.fillStyle = filled >= 1 ? '#10b981' : '#38bdf8';
-  ctx.beginPath(); roundRect(ctx, cx, cy - 6, barW * filled, 3, 2); ctx.fill();
+  const filled = snap.coveragePct / 100;
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  ctx.beginPath(); roundRect(ctx, cx, by + 6, rw, 4, 2); ctx.fill();
+  ctx.fillStyle = filled >= 0.9 ? '#10b981' : '#38bdf8';
+  ctx.beginPath(); roundRect(ctx, cx, by + 6, rw * filled, 4, 2); ctx.fill();
 }
 
-/* ── 3. SECTOR MAP (circular compass in bottom-right) ── */
+/* ── 3. SECTOR MAP — same compass widget, now filled from spatialMap.coverage ── */
 function drawSectorMap(ctx, W, H) {
   const mx = W - 68, my = H - 140;
   const R = 52, r = 20;
 
-  // Outer ring bg
   ctx.save();
   ctx.globalAlpha = 0.88;
 
-  // Background disc
   ctx.beginPath(); ctx.arc(mx, my, R+4, 0, Math.PI*2);
   ctx.fillStyle = 'rgba(15,23,42,0.72)';
   ctx.fill();
   ctx.strokeStyle = 'rgba(56,189,248,0.22)'; ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // Draw 4 sectors
+  const covKeys = ['front','right','back','left'];
   DIRECTIONS.forEach((dir, i) => {
     const startAngle = (i * Math.PI/2) - Math.PI/2 - Math.PI/4;
     const endAngle   = startAngle + Math.PI/2;
-    const framesInDir = capturedFrames.filter(f => f.dir === dir).length;
-    const fill = Math.min(1, framesInDir / FRAMES_PER_DIR);
+    const fill = scanner.spatialMap.coverage[covKeys[i]] || 0;
 
-    // Filled arc
     ctx.beginPath();
     ctx.moveTo(mx, my);
     ctx.arc(mx, my, R, startAngle, endAngle);
     ctx.closePath();
 
-    // Color: completed = green, current = cyan pulse, pending = dim
-    if (fill >= 1) {
+    if (fill >= 0.9) {
       ctx.fillStyle = 'rgba(16,185,129,0.55)';
     } else if (i === dirIndex) {
       const pulse = 0.35 + 0.25 * Math.sin(Date.now() / 350);
       ctx.fillStyle = `rgba(56,189,248,${pulse})`;
     } else {
-      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      ctx.fillStyle = `rgba(56,189,248,${0.08 + fill * 0.3})`;
     }
     ctx.fill();
 
-    // Sector border
     ctx.strokeStyle = i === dirIndex ? 'rgba(56,189,248,0.80)' : 'rgba(255,255,255,0.12)';
     ctx.lineWidth = i === dirIndex ? 2 : 1;
     ctx.stroke();
 
-    // Direction label
     const labelAngle = startAngle + Math.PI/4;
     const lx = mx + (R*0.62) * Math.cos(labelAngle);
     const ly = my + (R*0.62) * Math.sin(labelAngle);
     const shortLabel = ['F','R','B','L'][i];
     ctx.font = `bold ${i===dirIndex?'12':'10'}px "JetBrains Mono",monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = fill>=1 ? '#10b981' : (i===dirIndex ? '#38bdf8' : 'rgba(255,255,255,0.35)');
+    ctx.fillStyle = fill>=0.9 ? '#10b981' : (i===dirIndex ? '#38bdf8' : 'rgba(255,255,255,0.35)');
     ctx.fillText(shortLabel, lx, ly);
   });
 
-  // Inner hole
   ctx.beginPath(); ctx.arc(mx, my, r, 0, Math.PI*2);
   ctx.fillStyle = 'rgba(15,23,42,0.90)';
   ctx.fill();
   ctx.strokeStyle = 'rgba(56,189,248,0.30)'; ctx.lineWidth = 1.5; ctx.stroke();
 
-  // Center dot
+  // live heading needle (where the camera is pointing relative to where you started)
+  const hy = scanner.viewYaw * Math.PI / 180;
+  ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx + R * 0.95 * Math.sin(hy), my - R * 0.95 * Math.cos(hy)); ctx.stroke();
+
   ctx.beginPath(); ctx.arc(mx, my, 5, 0, Math.PI*2);
   ctx.fillStyle = '#38bdf8'; ctx.fill();
 
-  // Frame count
   ctx.font = 'bold 9px "JetBrains Mono",monospace';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.fillText(`${capturedFrames.length}/${TOTAL_TARGET}`, mx, my + R + 6);
+  ctx.fillText(`${capturedFrames.length} imgs`, mx, my + R + 6);
 
   ctx.restore();
 }
 
-/* ── 4. DIRECTION ARROW (points where to move) ── */
-function drawDirectionArrow(ctx, W, H) {
-  if (dirIndex >= DIRECTIONS.length) return;
-
-  // Arrow points from center towards the correct edge
-  const cx = W/2, cy = H * 0.52;
-  const arrowMap = {
-    0: [0, -1],    // FRONT → up
-    1: [1,  0],    // RIGHT → right
-    2: [0,  1],    // BACK  → down
-    3: [-1, 0],    // LEFT  → left
-  };
-  const [dx, dy] = arrowMap[dirIndex] || [0,-1];
-  const len = 38;
-  const ax = cx + dx * 55, ay = cy + dy * 55;
-  const tx = ax + dx * len, ty = ay + dy * len;
-
-  const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 300);
+/* ── 4. SURFACE / COVERAGE DOME — the grid you see is the map.
+      Green = scanned, cyan = in progress, amber = still missing.
+      Each cell is projected onto the live camera view from the phone's real orientation. ── */
+function drawDomeOverlay(ctx, W, H) {
+  if (!scanner.R || !scanner.spatialMap.cells) return;
+  const active = scanner.state === 'MAPPING' || scanner.state === 'PAUSED' || scanner.state === 'CAPTURING' || scanner.state === 'IDLE';
+  if (!active) return;
+  const step = SCANNER_CONFIG.YAW_STEP_DEG, pstep = SCANNER_CONFIG.PITCH_STEP_DEG;
+  const target = (scanner.state === 'MAPPING' || scanner.state === 'CAPTURING') ? scanner.nextTarget() : null;
+  const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 260);
+  const n = scanner.cols * scanner.rows;
 
   ctx.save();
-  ctx.globalAlpha = pulse;
-  ctx.strokeStyle = '#38bdf8';
-  ctx.fillStyle   = '#38bdf8';
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  ctx.shadowColor = '#38bdf8';
-  ctx.shadowBlur = 14;
+  ctx.lineWidth = 1;
+  for (let i = 0; i < n; i++) {
+    const cyaw = scanner.cellYawPitch(i);
+    if (Math.abs(((cyaw.yaw - scanner.viewYaw + 540) % 360) - 180) > 75) continue;   // far behind you
+    const y0 = cyaw.yaw - step / 2, y1 = cyaw.yaw + step / 2;
+    const p0 = cyaw.pitch - pstep / 2, p1 = cyaw.pitch + pstep / 2;
+    const a = scanner.project(y0, p0), b = scanner.project(y1, p0), c = scanner.project(y1, p1), d = scanner.project(y0, p1);
+    if (!a || !b || !c || !d || a.behind || b.behind || c.behind || d.behind) continue;
 
-  // Line shaft
-  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(tx, ty); ctx.stroke();
+    const v = scanner.layer(i);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.closePath();
 
-  // Arrowhead
-  const hw = 10, hl = 14;
-  const perp = [-dy, dx];
-  ctx.beginPath();
-  ctx.moveTo(tx + dx*hl, ty + dy*hl);
-  ctx.lineTo(tx + perp[0]*hw, ty + perp[1]*hw);
-  ctx.lineTo(tx - perp[0]*hw, ty - perp[1]*hw);
-  ctx.closePath();
-  ctx.fill();
+    if (v >= 1) {
+      ctx.fillStyle = 'rgba(16,185,129,0.30)';
+      ctx.strokeStyle = 'rgba(52,211,153,0.75)';
+    } else if (v > 0) {
+      ctx.fillStyle = `rgba(56,189,248,${0.10 + v * 0.20})`;
+      ctx.strokeStyle = 'rgba(56,189,248,0.70)';
+    } else {
+      ctx.fillStyle = 'rgba(245,158,11,0.10)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+    }
+    if (target && target.index === i) {
+      ctx.fillStyle = `rgba(245,158,11,${0.22 + 0.25 * pulse})`;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2.5;
+    } else ctx.lineWidth = 1;
+    ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+}
 
-  // Direction text
-  ctx.shadowBlur = 6;
-  ctx.font = 'bold 12px "JetBrains Mono", monospace';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#38bdf8';
-  const tlx = cx + dx * 30, tly = cy + dy * 30;
-  ctx.fillText('→ ' + DIRECTIONS[dirIndex], tlx + dx*50 - dx*30, tly + dy*50 - dy*30 + dy*22);
+/* ── 5. GUIDANCE — tells the user exactly WHERE to point the camera next ── */
+function drawGuidance(ctx, W, H) {
+  const st = scanner.state;
+  const cx = W / 2, cy = H / 2;
 
+  // centre reticle: green while credit is being earned, amber when moving too fast
+  const tooFast = scanner.speedDegS > SCANNER_CONFIG.MAX_SPEED_DEG_S;
+  const scanning = st === 'MAPPING' || st === 'CAPTURING';
+  ctx.save();
+  ctx.strokeStyle = !scanning ? 'rgba(255,255,255,0.55)' : (tooFast ? '#ef4444' : '#10b981');
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - 22, cy); ctx.lineTo(cx - 8, cy); ctx.moveTo(cx + 8, cy); ctx.lineTo(cx + 22, cy);
+  ctx.moveTo(cx, cy - 22); ctx.lineTo(cx, cy - 8); ctx.moveTo(cx, cy + 8); ctx.lineTo(cx, cy + 22); ctx.stroke();
+  ctx.restore();
+
+  if (!scanning) return;
+
+  if (!scanner.hasSensor) {
+    drawGuideBanner(ctx, W, H, 'NO MOTION SENSORS · use a phone over HTTPS', '#ef4444');
+    return;
+  }
+  if (tooFast) { drawGuideBanner(ctx, W, H, 'SLOW DOWN — moving too fast', '#ef4444'); return; }
+
+  const t = scanner.nextTarget();
+  if (!t) { drawGuideBanner(ctx, W, H, '✔ ALL AREAS SCANNED', '#10b981'); return; }
+
+  const p = scanner.project(t.yaw, t.pitch);
+  const margin = 46;
+  const onScreen = p && !p.behind && p.x > margin && p.x < W - margin && p.y > margin + 80 && p.y < H - 150;
+  const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 250);
+
+  ctx.save();
+  if (onScreen) {
+    // target is in view: ring + "SCAN HERE"
+    ctx.globalAlpha = pulse;
+    ctx.strokeStyle = '#f59e0b'; ctx.fillStyle = '#f59e0b';
+    ctx.lineWidth = 3; ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 26, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    ctx.font = 'bold 12px "JetBrains Mono", monospace'; ctx.textAlign = 'center';
+    ctx.fillText('SCAN HERE', p.x, p.y - 38);
+  } else {
+    // off-screen: arrow toward it, direction taken from camera-space (works even with phone roll)
+    let dx = 0, dy = 0;
+    if (p) { dx = p.vx; dy = -p.vy; }
+    if (!p || Math.hypot(dx, dy) < 0.02) { dx = t.dYaw >= 0 ? 1 : -1; dy = 0; }
+    const len = Math.hypot(dx, dy); dx /= len; dy /= len;
+    const ax = cx + dx * W * 0.34, ay = cy + dy * H * 0.26;
+    const ang = Math.atan2(dy, dx);
+    ctx.translate(ax, ay); ctx.rotate(ang);
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = '#f59e0b'; ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.moveTo(34, 0); ctx.lineTo(-6, -24); ctx.lineTo(-6, -9); ctx.lineTo(-30, -9);
+    ctx.lineTo(-30, 9); ctx.lineTo(-6, 9); ctx.lineTo(-6, 24); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+
+  drawGuideBanner(ctx, W, H, scanner.guidanceText(), '#f59e0b');
+}
+
+function drawGuideBanner(ctx, W, H, text, color) {
+  ctx.save();
+  ctx.font = 'bold 13px "JetBrains Mono", monospace';
+  const tw = ctx.measureText(text).width + 28, x = (W - tw) / 2, y = H - 178;
+  ctx.fillStyle = 'rgba(15,23,42,0.82)';
+  ctx.beginPath(); roundRect(ctx, x, y, tw, 30, 15); ctx.fill();
+  ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, W / 2, y + 15.5);
   ctx.restore();
 }
 
@@ -2436,29 +3846,64 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   REVIEW
+   REVIEW & FRAME MANAGEMENT (WITH REMOVAL SUPPORT)
 ══════════════════════════════════════════════════════════════ */
+function renderReviewGrid() {
+  const grid = document.getElementById('photoGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  capturedFrames.forEach((f, i) => {
+    const d = document.createElement('div');
+    d.className = 'photo-thumb';
+    d.style.animationDelay = `${Math.min(i, 20) * 0.02}s`;
+    d.innerHTML = `
+      <img src="${f.url}" loading="lazy" alt="Frame ${i+1}"/>
+      <div class="photo-thumb-num">#${i+1}</div>
+      <button class="photo-thumb-del" onclick="deleteCapturedFrame(${i}); event.stopPropagation();" title="Remove photo" aria-label="Remove photo">✕</button>
+    `;
+    grid.appendChild(d);
+  });
+
+  const sub = document.getElementById('reviewSubtitle');
+  if (sub) {
+    sub.textContent = `${capturedFrames.length} frames · ${scanTarget==='building'?'Structural':'Object 360°'}`;
+  }
+  const sendBtn = document.querySelector('.review-send-btn');
+  if (sendBtn) {
+    sendBtn.disabled = capturedFrames.length === 0;
+    sendBtn.style.opacity = capturedFrames.length === 0 ? '0.5' : '1';
+    sendBtn.style.pointerEvents = capturedFrames.length === 0 ? 'none' : 'auto';
+  }
+}
+
+function deleteCapturedFrame(index) {
+  if (index < 0 || index >= capturedFrames.length) return;
+  const removed = capturedFrames.splice(index, 1)[0];
+  if (removed && removed.url) {
+    try { URL.revokeObjectURL(removed.url); } catch (e) {}
+  }
+  // Re-index remaining frames
+  capturedFrames.forEach((f, i) => { f.id = i + 1; });
+  if (scanner.spatialMap && Array.isArray(scanner.spatialMap.frames)) {
+    scanner.spatialMap.frames = capturedFrames;
+  }
+  haptic('light');
+  renderReviewGrid();
+  updateCount();
+  showToast(`Photo removed (${capturedFrames.length} remaining)`, 'info');
+}
+
 function showReview() {
   stopARCanvas();
   if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
   document.getElementById('cameraOverlay').classList.remove('active','overlay-enter');
 
-  const grid = document.getElementById('photoGrid');
-  grid.innerHTML = '';
-  capturedFrames.forEach((f,i) => {
-    const d = document.createElement('div');
-    d.className = 'photo-thumb';
-    d.style.animationDelay = `${i*0.035}s`;
-    d.innerHTML = `<img src="${f.url}" loading="lazy" alt="Frame ${i+1}"/><div class="photo-thumb-num">#${i+1}</div>`;
-    grid.appendChild(d);
-  });
-
-  document.getElementById('reviewSubtitle').textContent =
-    `${capturedFrames.length} frames · ${scanTarget==='building'?'Structural':'Object 360°'}`;
+  renderReviewGrid();
 
   document.getElementById('reviewOverlay').classList.add('active','overlay-enter');
   playSuccess();
 }
+
 
 function backToCamera() {
   document.getElementById('reviewOverlay').classList.remove('active','overlay-enter');
@@ -2473,6 +3918,11 @@ function getTargetEndpoint() {
   const directUrl = localStorage.getItem('direct_laptop_url') || '';
   if (mode === 'direct' && directUrl.trim() && !directUrl.includes('vercel.app')) {
     return directUrl.replace(/\/$/, '') + '/api/upload-batch';
+  }
+  if (mode === 'cloud') {
+    if (!window.location.hostname.includes('vercel.app')) {
+      return 'https://smart-crack-detection.vercel.app/api/upload-batch';
+    }
   }
   return '/api/upload-batch';
 }
@@ -2652,9 +4102,49 @@ async function sendToLaptop() {
 
   syncOv.classList.add('active','overlay-enter');
 
-  const fd = new FormData();
-  fd.append('scanId', currentScanId);
-  capturedFrames.forEach((f,i) => fd.append('images', f.blob, `frame_${String(i).padStart(3,'0')}.jpg`));
+  // ── Scan package metadata: poses, intrinsics, spatial map, per-frame index ──
+  // Appended alongside the images so an existing images-only backend keeps working
+  // (it can simply ignore the extra fields) while an updated backend can persist
+  // them for COLMAP / Open3D on the laptop.
+  const framesJson = capturedFrames.map((f, i) => ({
+    id: f.id,
+    file: `frame_${String(i).padStart(3,'0')}.jpg`,
+    timestamp: f.timestamp,
+    pose: f.pose,
+    intrinsics: f.intrinsics,
+    trackingState: f.trackingState,
+    depthAvailable: f.depthAvailable,
+    coverageRegion: f.coverageRegion,
+    viewYaw: f.viewYaw,
+    viewPitch: f.viewPitch,
+    sharpnessScore: f.sharpnessScore,
+    captureReason: f.captureReason,
+  }));
+  const posesJson = capturedFrames.map(f => ({ file: `frame_${String(f.id-1).padStart(3,'0')}.jpg`, pose: f.pose }));
+  const intrinsicsJson = scanner.intrinsics;
+  const spatialMapJson = {
+    trackingLevel: scanner.level,
+    levelLabel: scanner.levelLabel,
+    trackingState: scanner.spatialMap.trackingState,
+    coverage: scanner.spatialMap.coverage,
+    mapQuality: scanner.spatialMap.mapQuality,
+    duration: scanner.spatialMap.duration,
+    depthAvailable: scanner.capabilities.depthSensing,
+    method: 'orientation-coverage-dome',
+    dome: { cols: scanner.cols, rows: scanner.rows, yawStepDeg: SCANNER_CONFIG.YAW_STEP_DEG, pitchStepDeg: SCANNER_CONFIG.PITCH_STEP_DEG, pitchMinDeg: scanner.pitchMin, startYawAbs: scanner.startYaw },
+    scanCells: Array.from(scanner.spatialMap.cells, v => Math.round(v * 100) / 100),
+    photoCells: Array.from(scanner.photoCells),
+    mappingExtensions: scanner.extensions,
+  };
+  const scanMetadataJson = {
+    scanId: currentScanId,
+    scanTarget,
+    createdAt: new Date().toISOString(),
+    frameCount: capturedFrames.length,
+    acceptedFrames: scanner.stats.acceptedFrames,
+    rejectedFrames: scanner.stats.rejectedFrames,
+    intrinsicsEstimated: !!(scanner.intrinsics && scanner.intrinsics.estimated),
+  };
 
   await sleep(600);
   document.getElementById('ss1-info').textContent = `${capturedFrames.length} frames ready`;
@@ -2665,20 +4155,55 @@ async function sendToLaptop() {
   document.getElementById('ss2-info').textContent = isCloud ? 'Uploading to Cloud Relay…' : 'Uploading to Laptop…';
 
   try {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', endpoint, true);
-    xhr.upload.onprogress = e => {
-      if (e.lengthComputable) {
-        const p = Math.round((e.loaded/e.total)*60)+20;
-        setProgress(p);
-        document.getElementById('ss2-info').textContent =
-          `${Math.round(e.loaded/1024)}KB / ${Math.round(e.total/1024)}KB`;
+    const BATCH_SIZE = isCloud ? 5 : capturedFrames.length;
+    const totalBatches = Math.max(1, Math.ceil(capturedFrames.length / BATCH_SIZE));
+
+    for (let b = 0; b < totalBatches; b++) {
+      const start = b * BATCH_SIZE;
+      const end = Math.min(start + BATCH_SIZE, capturedFrames.length);
+      const batchSlice = capturedFrames.slice(start, end);
+
+      const chunkFd = new FormData();
+      chunkFd.append('scanId', currentScanId);
+      batchSlice.forEach((f, idx) => {
+        chunkFd.append('images', f.blob, `frame_${String(start + idx).padStart(3, '0')}.jpg`);
+      });
+
+      // On final batch, append all structured scan metadata
+      if (b === totalBatches - 1) {
+        chunkFd.append('frames', new Blob([JSON.stringify(framesJson)], { type: 'application/json' }), 'frames.json');
+        chunkFd.append('poses', new Blob([JSON.stringify(posesJson)], { type: 'application/json' }), 'poses.json');
+        chunkFd.append('intrinsics', new Blob([JSON.stringify(intrinsicsJson)], { type: 'application/json' }), 'intrinsics.json');
+        chunkFd.append('spatialMap', new Blob([JSON.stringify(spatialMapJson)], { type: 'application/json' }), 'spatial_map.json');
+        chunkFd.append('scanMetadata', new Blob([JSON.stringify(scanMetadataJson)], { type: 'application/json' }), 'scan_metadata.json');
       }
-    };
-    xhr.onload = () => (xhr.status===200||xhr.status===201) ? uploadSuccess(isCloud) : uploadError(`Server ${xhr.status}`);
-    xhr.onerror = () => uploadError(isCloud ? 'Upload failed — check internet' : 'Cannot reach laptop — verify URL or use Cloud Relay');
-    xhr.send(fd);
-  } catch(err) { uploadError(err.message); }
+
+      document.getElementById('ss2-info').textContent = totalBatches > 1
+        ? `Uploading frames ${end}/${capturedFrames.length}…`
+        : (isCloud ? 'Uploading to Cloud Relay…' : 'Uploading to Laptop…');
+
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', endpoint, true);
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable) {
+            const batchRatio = e.loaded / e.total;
+            const p = Math.round(20 + ((b + batchRatio) / totalBatches) * 60);
+            setProgress(p);
+          }
+        };
+        xhr.onload = () => (xhr.status === 200 || xhr.status === 201) ? resolve() : reject(new Error(`Server ${xhr.status}`));
+        xhr.onerror = () => reject(new Error(isCloud ? 'Upload failed — check internet connection' : 'Cannot reach laptop — verify URL or use Cloud Relay'));
+        xhr.send(chunkFd);
+      });
+
+      setProgress(Math.round(20 + ((b + 1) / totalBatches) * 60));
+    }
+
+    uploadSuccess(isCloud);
+  } catch(err) {
+    uploadError(err.message);
+  }
 }
 
 async function uploadSuccess(isCloud) {
@@ -2731,6 +4256,8 @@ function resetAll() {
   document.getElementById('syncOverlay').classList.remove('active','overlay-enter');
   capturedFrames.forEach(f => URL.revokeObjectURL(f.url));
   capturedFrames = []; currentScanId = null; dirIndex = 0; framePerDir = 0;
+  scanner.reset();
+  lastAcceptedHash = null;
   window.scrollTo({ top:0, behavior:'smooth' });
   showToast('Ready for a new scan', 'success');
   haptic('medium');

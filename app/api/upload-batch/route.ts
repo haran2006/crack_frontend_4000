@@ -4,6 +4,16 @@ import path from "path";
 
 const PENDING_DIR = path.join(process.env.TEMP || "/tmp", "pending_scans");
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders });
+}
+
 function ensureDir(dir: string) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -58,6 +68,20 @@ export async function POST(req: NextRequest) {
         fs.writeFileSync(path.join(scanDir, filename), buffer);
         savedCount++;
       }
+
+      // Also persist any accompanying metadata files (poses, intrinsics, spatialMap, etc.)
+      for (const [key, val] of formData.entries()) {
+        if (key === "scanId" || key === "images") continue;
+        if (typeof val === "object" && val !== null && "arrayBuffer" in val) {
+          try {
+            const file = val as File;
+            const bytes = await file.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+            const filename = file.name || `${key}.json`;
+            fs.writeFileSync(path.join(scanDir, filename), buffer);
+          } catch (_) {}
+        }
+      }
     } else {
       // JSON payload support
       const body = await req.json();
@@ -78,12 +102,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Update scan metadata
+    // Update scan metadata reflecting all cumulative frames in folder
     const scanDir = path.join(PENDING_DIR, scanId);
+    const totalFrames = fs.readdirSync(scanDir).filter((f) => /\.(jpg|jpeg|png)$/i.test(f)).length;
     const meta = {
       scanId,
       timestamp: Date.now(),
-      frameCount: savedCount,
+      frameCount: totalFrames,
       receivedAt: new Date().toISOString(),
       downloaded: false,
     };
@@ -94,14 +119,20 @@ export async function POST(req: NextRequest) {
     index.push(meta);
     saveIndex(index);
 
-    return NextResponse.json({
-      ok: true,
-      scanId,
-      frameCount: savedCount,
-      message: "Scan successfully queued in Cloud Relay for laptop synchronization",
-    });
+    return NextResponse.json(
+      {
+        ok: true,
+        scanId,
+        frameCount: totalFrames,
+        message: "Scan successfully queued in Cloud Relay for laptop synchronization",
+      },
+      { headers: corsHeaders }
+    );
   } catch (err: any) {
     console.error("Upload error:", err);
-    return NextResponse.json({ ok: false, error: err.message || "Failed to upload scan" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: err.message || "Failed to upload scan" },
+      { status: 500, headers: corsHeaders }
+    );
   }
 }
