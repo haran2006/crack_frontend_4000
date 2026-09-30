@@ -2424,6 +2424,17 @@ model-viewer {
       <div class="modal-status-msg" id="keyStatusMsg" style="margin-top:8px;"></div>
     </div>
 
+    <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:#0369a1;display:flex;flex-direction:column;gap:6px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-weight:700;">🧠 KIRI Photogrammetry Cloud:</span>
+        <span id="kiriCreditBadge" style="font-family:var(--font-mono);font-weight:700;color:#0284c7;background:#e0f2fe;padding:2px 8px;border-radius:10px;">13 Credits (2 Keys Connected)</span>
+      </div>
+      <div id="kiriKeySubInfo" style="font-size:11px;color:#0ea5e9;display:flex;justify-content:space-between;">
+        <span>Key 1: 3 Credits (Primary)</span>
+        <span>Key 2: 10 Credits (Auto-Failover Backup)</span>
+      </div>
+    </div>
+
     <div style="background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between;">
       <span>🔑 System Authorization Key:</span>
       <span style="font-family:var(--font-mono);font-weight:700;color:var(--accent-cyan);letter-spacing:0.08em;font-size:13px;">crack</span>
@@ -3429,9 +3440,29 @@ async function triggerCloudSync() {
   }
 }
 
+async function loadKiriBalance() {
+  try {
+    const res = await fetch('/api/kiri/balance');
+    const data = await res.json();
+    if (data.ok && data.data) {
+      const badge = document.getElementById('kiriCreditBadge');
+      if (badge) {
+        badge.textContent = `${data.data.balance} Credits (${data.data.keys.length} Keys Connected)`;
+      }
+      const sub = document.getElementById('kiriKeySubInfo');
+      if (sub && data.data.keys) {
+        sub.innerHTML = data.data.keys.map(k => `<span>${k.name}: <b>${k.balance}</b> Credits</span>`).join(' • ');
+      }
+    }
+  } catch (e) {
+    console.warn("Could not load KIRI balance:", e);
+  }
+}
+
 // Initial Run
 initNetwork();
 loadScanHistory();
+loadKiriBalance();
 switchMode(1);
 </script>
 </body>
