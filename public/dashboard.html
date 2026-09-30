@@ -3442,7 +3442,7 @@ async function triggerCloudSync() {
 
 async function loadKiriBalance() {
   try {
-    const res = await fetch('/api/kiri/balance');
+    const res = await fetch(`/api/kiri/balance?_t=${Date.now()}`);
     const data = await res.json();
     if (data.ok && data.data) {
       const badge = document.getElementById('kiriCreditBadge');

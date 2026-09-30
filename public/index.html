@@ -4230,7 +4230,7 @@ updateSyncBadgeUI();
 
 async function loadKiriLiveBalance() {
   try {
-    const res = await fetch('/api/kiri/balance');
+    const res = await fetch(`/api/kiri/balance?_t=${Date.now()}`);
     const data = await res.json();
     if (data.ok && data.data) {
       const pill = document.getElementById('kiriPillLabel');
