@@ -1,7 +1,69 @@
 [
   {
+    "id": "Building_Facade_Inspection_20261001",
+    "name": "Building_Facade_Inspection_20261001",
+    "count": 7,
+    "mb": "1.82 MB",
+    "hasGlb": false,
+    "glbUrl": "/models/Building_Facade_Inspection_20261001.glb",
+    "fallbackGlb": "/models/model.glb",
+    "hasCrack": true,
+    "cracksCount": 2,
+    "crackType": "Shear & Longitudinal Crack (Critical)",
+    "conf": "94.2%",
+    "sector": "Front-Left Sector",
+    "crackAnalysis": {
+      "scanId": "Building_Facade_Inspection_20261001",
+      "analyzedAt": "2026-10-01T05:39:43.895Z",
+      "structuralHealthScore": 92.4,
+      "status": "Nominal / Serviceable",
+      "totalCracksDetected": 2,
+      "maxCrackWidthMm": 0.68,
+      "maxDepthMm": 1.8,
+      "severityLevel": "MODERATE",
+      "cracks": [
+        {
+          "id": "CRK-01",
+          "type": "Longitudinal Tensile Fracture",
+          "severity": "MODERATE",
+          "lengthCm": 12.4,
+          "widthMm": 0.68,
+          "depthMm": 1.8,
+          "sector": "Sector 2 (Front-Left)",
+          "confidence": 0.96,
+          "recommendation": "Seal with flexible polymer joint sealant to prevent water infiltration.",
+          "hotspot": {
+            "position": "0.15m 0.25m 0.10m",
+            "normal": "0 1 0"
+          }
+        },
+        {
+          "id": "CRK-02",
+          "type": "Surface Micro-Crazing / Shrinkage Fissure",
+          "severity": "LOW",
+          "lengthCm": 4.8,
+          "widthMm": 0.22,
+          "depthMm": 0.5,
+          "sector": "Sector 4 (Top Surface)",
+          "confidence": 0.91,
+          "recommendation": "Monitor progression during scheduled quarterly inspection cycle.",
+          "hotspot": {
+            "position": "-0.20m 0.18m -0.08m",
+            "normal": "0 1 0"
+          }
+        }
+      ],
+      "predictiveMaintenance": {
+        "recommendedInterventionDays": 90,
+        "riskOfStructuralFailure": "4.2% within 12 months without treatment",
+        "costBenefitImpact": "Timely polymer sealing saves estimated 85% vs full structural replacement"
+      }
+    },
+    "createdAt": "2026-10-01T05:39:19.395Z"
+  },
+  {
     "id": "survey_20260930150113_",
-    "name": "Reinforced Slab Multi-Milestone Survey",
+    "name": "survey_20260930150113_",
     "count": 70,
     "mb": "21.44 MB",
     "hasGlb": true,
@@ -2494,7 +2556,7 @@
   },
   {
     "id": "survey_20260930145709_",
-    "name": "Tunnel Lining Spatial Inspection",
+    "name": "survey_20260930145709_",
     "count": 35,
     "mb": "11.43 MB",
     "hasGlb": true,
@@ -3597,7 +3659,7 @@
   },
   {
     "id": "survey_20260930145253_",
-    "name": "Bridge Pier Photogrammetry Scan",
+    "name": "survey_20260930145253_",
     "count": 85,
     "mb": "25.39 MB",
     "hasGlb": true,
@@ -6224,7 +6286,7 @@
   },
   {
     "id": "survey_structural_crack_demo",
-    "name": "Structural Crack Inspection (Active)",
+    "name": "Survey structural_crack_demo",
     "count": 36,
     "mb": "3.47 MB",
     "hasGlb": true,
@@ -7326,7 +7388,7 @@
   },
   {
     "id": "survey_20260929173305_",
-    "name": "Structural Foundation Survey",
+    "name": "survey_20260929173305_",
     "count": 64,
     "mb": "6.59 MB",
     "hasGlb": true,
@@ -9270,7 +9332,7 @@
   },
   {
     "id": "survey_20260929172842_",
-    "name": "Concrete Column 360 Survey",
+    "name": "survey_20260929172842_",
     "count": 60,
     "mb": "5.48 MB",
     "hasGlb": true,
