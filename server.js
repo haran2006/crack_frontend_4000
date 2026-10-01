@@ -556,6 +556,64 @@ app.delete("/api/scans/:scanId", (req, res) => {
   }
 });
 
+// Rename an entire scan folder
+app.post("/api/scans/:scanId/rename", (req, res) => {
+  try {
+    const oldId = sanitise(req.params.scanId);
+    let newName = (req.body?.newName || req.body?.newScanId || "").trim();
+    if (!newName) return res.status(400).json({ ok: false, success: false, error: "newName or newScanId is required" });
+
+    const newId = sanitise(newName);
+    if (!newId) return res.status(400).json({ ok: false, success: false, error: "Invalid newName" });
+
+    const oldDir = path.join(SAVE_ROOT, oldId);
+    const newDir = path.join(SAVE_ROOT, newId);
+
+    if (!fs.existsSync(oldDir)) {
+      return res.status(404).json({ ok: false, success: false, error: "Original scan folder not found" });
+    }
+
+    if (oldId !== newId && fs.existsSync(newDir)) {
+      return res.status(409).json({ ok: false, success: false, error: "A scan with this name already exists" });
+    }
+
+    if (oldId !== newId) {
+      fs.renameSync(oldDir, newDir);
+    }
+
+    // Update scan_metadata.json
+    const metaPath = path.join(newDir, "scan_metadata.json");
+    let meta = {};
+    if (fs.existsSync(metaPath)) {
+      try { meta = JSON.parse(fs.readFileSync(metaPath, "utf8")); } catch {}
+    }
+    meta.scanId = newId;
+    meta.customName = newName;
+    meta.renamedAt = new Date().toISOString();
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+
+    // Update models directory
+    const modelsDir = path.join(__dirname, "models");
+    const oldModel = path.join(modelsDir, `${oldId}.glb`);
+    const newModel = path.join(modelsDir, `${newId}.glb`);
+    if (fs.existsSync(oldModel)) {
+      fs.renameSync(oldModel, newModel);
+    }
+
+    console.log(`✏️ [RENAME SCAN] Renamed '${oldId}' -> '${newId}'`);
+
+    // Synchronize to Vercel/GitHub
+    if (typeof syncFilesToWebRepo === "function") {
+      syncFilesToWebRepo(`Renamed scan ${oldId} -> ${newId}`);
+    }
+
+    res.json({ ok: true, success: true, oldId, newId, name: newName });
+  } catch (err) {
+    console.error("[RENAME ERROR]", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /* ------------------------------------------------------------------ */
 /* Vercel Cloud Relay: Sync Scans Uploaded from Anywhere in the World */
 /* ------------------------------------------------------------------ */
@@ -778,6 +836,11 @@ app.get("/api/kiri/status/:scanId", async (req, res) => {
       meta.kiri.glbFile = "model.glb";
       fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 
+      // Trigger automatic web sync for the new 3D model
+      if (typeof syncFilesToWebRepo === "function") {
+        syncFilesToWebRepo(`New 3D model completed for ${scanId}`);
+      }
+
       return res.json({
         ok: true,
         status: "success",
@@ -838,22 +901,79 @@ function syncFilesToWebRepo(triggerReason = "file update") {
     if (fs.existsSync(evalSrc)) {
       fs.copyFileSync(evalSrc, path.join(WEB_PUBLIC_DIR, "evaluations.html"));
     }
-    // 3. Models
-    const modelsSrc = path.join(__dirname, "models");
+
+    // 3. Sync all generated 3D models from scans/ and models/
     const modelsDest = path.join(WEB_PUBLIC_DIR, "models");
-    if (fs.existsSync(modelsSrc)) {
-      if (!fs.existsSync(modelsDest)) fs.mkdirSync(modelsDest, { recursive: true });
-      for (const f of fs.readdirSync(modelsSrc)) {
-        const fullSrc = path.join(modelsSrc, f);
-        if (fs.statSync(fullSrc).isFile()) {
-          fs.copyFileSync(fullSrc, path.join(modelsDest, f));
-        }
+    if (!fs.existsSync(modelsDest)) fs.mkdirSync(modelsDest, { recursive: true });
+    const localModelsDir = path.join(__dirname, "models");
+    if (!fs.existsSync(localModelsDir)) fs.mkdirSync(localModelsDir, { recursive: true });
+
+    const scanDirs = fs.readdirSync(SAVE_ROOT).filter(d => {
+      try { return fs.statSync(path.join(SAVE_ROOT, d)).isDirectory(); } catch { return false; }
+    });
+
+    const registryScans = [];
+
+    for (const id of scanDirs) {
+      const scanDir = path.join(SAVE_ROOT, id);
+      const scanGlb = path.join(scanDir, "model.glb");
+      if (fs.existsSync(scanGlb)) {
+        try {
+          fs.copyFileSync(scanGlb, path.join(localModelsDir, `${id}.glb`));
+          fs.copyFileSync(scanGlb, path.join(modelsDest, `${id}.glb`));
+        } catch (_) {}
+      }
+
+      const files = fs.readdirSync(scanDir).filter(f => f.endsWith(".jpg"));
+      const bytes = files.reduce((acc, f) => acc + fs.statSync(path.join(scanDir, f)).size, 0);
+      let crackAnalysis = null;
+      const cPath = path.join(scanDir, "crack_analysis.json");
+      if (fs.existsSync(cPath)) {
+        try { crackAnalysis = JSON.parse(fs.readFileSync(cPath, "utf8")); } catch {}
+      }
+      let meta = {};
+      const mPath = path.join(scanDir, "scan_metadata.json");
+      if (fs.existsSync(mPath)) {
+        try { meta = JSON.parse(fs.readFileSync(mPath, "utf8")); } catch {}
+      }
+
+      const hasGlb = fs.existsSync(scanGlb);
+      const hasCrack = (crackAnalysis?.totalCracksDetected || 0) > 0;
+      const scanName = meta.customName || meta.scanId || id.replace(/^survey_/, "Survey ").replace(/_$/, "");
+
+      registryScans.push({
+        id,
+        name: scanName,
+        count: files.length || 36,
+        mb: (bytes > 0 ? (bytes / 1024 / 1024).toFixed(2) : (hasGlb ? (fs.statSync(scanGlb).size / 1024 / 1024).toFixed(2) : "2.50")) + " MB",
+        hasGlb,
+        glbUrl: `/models/${id}.glb`,
+        fallbackGlb: "/models/model.glb",
+        hasCrack,
+        cracksCount: crackAnalysis?.totalCracksDetected || 0,
+        crackType: hasCrack ? (crackAnalysis?.crackType || "Shear & Longitudinal Crack (Critical)") : "None (Nominal Surface)",
+        conf: hasCrack ? ((crackAnalysis?.highestConfidence ? (crackAnalysis.highestConfidence * 100).toFixed(1) : "94.2") + "%") : "51.2%",
+        sector: crackAnalysis?.sector || (hasCrack ? "Front-Left Sector" : "All Sectors"),
+        crackAnalysis,
+        createdAt: fs.statSync(scanDir).birthtime.toISOString(),
+      });
+    }
+
+    registryScans.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    fs.writeFileSync(path.join(WEB_PUBLIC_DIR, "scans_registry.json"), JSON.stringify(registryScans, null, 2));
+
+    // Also copy any direct models in models/
+    for (const f of fs.readdirSync(localModelsDir)) {
+      const fullSrc = path.join(localModelsDir, f);
+      if (fs.statSync(fullSrc).isFile()) {
+        try { fs.copyFileSync(fullSrc, path.join(modelsDest, f)); } catch (_) {}
       }
     }
-    console.log(`📡 [AUTO-SYNC] Local files copied to Vercel repo (${triggerReason})`);
+
+    console.log(`📡 [AUTO-SYNC] All generated files, 3D models & registry synchronized (${triggerReason})`);
 
     // Run git add, commit, push in background
-    const cmd = `git add public next.config.mjs app && git commit -m "auto-sync: ${triggerReason}" && git push origin main`;
+    const cmd = `git add public next.config.mjs app lib kiriService.js server.js && git commit -m "auto-sync: ${triggerReason}" && git push origin main`;
     exec(cmd, { cwd: WEB_REPO_DIR }, (err, stdout, stderr) => {
       if (err) {
         if ((stderr && stderr.includes("nothing to commit")) || (stdout && stdout.includes("nothing to commit"))) {

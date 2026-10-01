@@ -728,6 +728,25 @@ body {
   box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
 }
 
+.preset-pill {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.preset-pill:hover, .preset-pill:active {
+  background: #e0f2fe;
+  border-color: #0284c7;
+  color: #0284c7;
+  transform: translateY(-1px);
+}
+
 .mob-download-btn svg {
   width: 22px;
   height: 22px;
@@ -2156,6 +2175,29 @@ body {
       <ul id="geminiActions" style="font-size:12px;color:var(--slate-mid);padding-left:18px;line-height:1.4;margin:0;">
         <li>Sealing & moisture protection advised</li>
       </ul>
+    </div>
+
+    <!-- Professional Survey Folder & Project Naming Card -->
+    <div class="review-project-name-card" style="background:#ffffff;border:1.5px solid #cbd5e1;border-radius:var(--r-md);padding:14px;margin-top:14px;box-shadow:0 4px 16px rgba(15,23,42,0.05);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <label for="customScanNameInput" style="font-size:12px;font-weight:700;color:var(--slate);display:flex;align-items:center;gap:6px;">
+          <span style="font-size:15px;">📁</span> SURVEY FOLDER &amp; PROJECT NAME
+        </label>
+        <span style="font-size:10.5px;font-weight:700;color:var(--cyan);background:rgba(2,132,199,0.1);padding:3px 8px;border-radius:10px;">Custom Name</span>
+      </div>
+      <div style="position:relative;">
+        <input type="text" id="customScanNameInput" class="target-input" style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--slate);background:#f8fafc;border:1.5px solid #0284c7;padding:10px 12px;border-radius:10px;width:100%;" placeholder="e.g. Bridge_Pier_Sector_4" value="" />
+      </div>
+      <div style="font-size:11px;color:var(--slate-muted);margin:8px 0 6px;">
+        Tap a quick engineering preset or type your custom name:
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button type="button" class="preset-pill" onclick="applyScanNamePreset('Bridge_Pier_North')">🌉 Bridge Pier</button>
+        <button type="button" class="preset-pill" onclick="applyScanNamePreset('Concrete_Wall_Sector_A')">🧱 Concrete Wall</button>
+        <button type="button" class="preset-pill" onclick="applyScanNamePreset('Highway_Pavement_Crack')">🛣️ Highway Crack</button>
+        <button type="button" class="preset-pill" onclick="applyScanNamePreset('Foundation_Beam_Survey')">🏗️ Foundation Beam</button>
+        <button type="button" class="preset-pill" onclick="applyScanNamePreset('Building_Facade_Inspection')">🏢 Building Facade</button>
+      </div>
     </div>
   </div>
   <div class="review-footer">
@@ -4080,12 +4122,39 @@ function deleteCapturedFrame(index) {
   showToast(`Photo removed (${capturedFrames.length} remaining)`, 'info');
 }
 
+function applyScanNamePreset(name) {
+  const input = document.getElementById('customScanNameInput');
+  if (input) {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const timeStr = `${pad(now.getHours())}${pad(now.getMinutes())}`;
+    input.value = `${name}_${timeStr}`;
+    input.focus();
+    if (typeof haptic === 'function') haptic('light');
+  }
+}
+
 function showReview() {
   stopARCanvas();
   if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
   document.getElementById('cameraOverlay').classList.remove('active','overlay-enter');
 
   renderReviewGrid();
+
+  // Populate professional folder name if empty
+  const input = document.getElementById('customScanNameInput');
+  if (input && !input.value.trim()) {
+    const targetMap = {
+      building: 'Building_Facade_Inspection',
+      road: 'Highway_Pavement_Crack',
+      object: 'Structural_Element_Survey',
+    };
+    const prefix = targetMap[scanTarget] || 'Structural_Survey';
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const dateStr = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+    input.value = `${prefix}_${dateStr}`;
+  }
 
   document.getElementById('reviewOverlay').classList.add('active','overlay-enter');
   playSuccess();
@@ -4336,6 +4405,16 @@ async function sendToLaptop() {
   haptic('heavy'); playClick();
   document.getElementById('reviewOverlay').classList.remove('active','overlay-enter');
 
+  // ── Consume custom / professional scan name if provided by user ──
+  const customNameInput = document.getElementById('customScanNameInput');
+  const customNameVal = (customNameInput ? customNameInput.value : '').trim();
+  if (customNameVal) {
+    const sanitized = customNameVal.replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').slice(0, 60);
+    if (sanitized) {
+      currentScanId = sanitized;
+    }
+  }
+
   const syncOv = document.getElementById('syncOverlay');
   document.getElementById('syncProgress').style.display = 'flex';
   document.getElementById('syncSuccess').style.display = 'none';
@@ -4346,8 +4425,8 @@ async function sendToLaptop() {
   const endpoint = getTargetEndpoint();
   const isCloud = endpoint.startsWith('/') || endpoint.includes('vercel.app');
   document.getElementById('syncSubtitle').textContent = isCloud
-    ? 'Queuing scan to Vercel Cloud Relay for Laptop Sync…'
-    : 'Direct transmission to laptop…';
+    ? `Queuing scan [${currentScanId}] to Vercel Cloud Relay for Laptop Sync…`
+    : `Direct transmission of [${currentScanId}] to laptop…`;
 
   ['ss1','ss2','ss3'].forEach((id,i) => {
     document.getElementById(id).style.opacity = i===0?'1':'0.4';
@@ -4485,13 +4564,35 @@ async function uploadSuccess(isCloud) {
   document.getElementById('syncProgress').style.display='none';
   document.getElementById('syncSuccess').style.display='flex';
 
+  const folderBadgeHtml = `<span style="display:inline-block;margin-top:6px;padding:5px 12px;background:#e0f2fe;border:1.5px solid #7dd3fc;border-radius:8px;color:#0369a1;font-family:var(--font-mono);font-size:13px;font-weight:700;word-break:break-all;">📁 ${currentScanId}</span>`;
+
   if (isCloud) {
     document.querySelector('.success-title').textContent = 'Cloud Synced! ☁️';
-    document.querySelector('.success-sub').textContent = 'Your scan is safe in Cloud Relay. Your laptop dashboard will auto-sync and build your 3D Digital Twin!';
+    document.querySelector('.success-sub').innerHTML = `Your scan is safe in Cloud Relay.<br>${folderBadgeHtml}<br><span style="font-size:12px;color:var(--slate-muted);display:block;margin-top:5px;">Your laptop studio dashboard will auto-sync and build your 3D Digital Twin!</span>`;
   } else {
     document.querySelector('.success-title').textContent = 'Photos Sent! 🎉';
-    document.querySelector('.success-sub').textContent = 'Your photos are on the laptop. Open the dashboard to build your 3D Digital Twin.';
+    document.querySelector('.success-sub').innerHTML = `Your photos are on the laptop.<br>${folderBadgeHtml}<br><span style="font-size:12px;color:var(--slate-muted);display:block;margin-top:5px;">Open the laptop dashboard to build your 3D Digital Twin.</span>`;
   }
+
+  // Pre-insert into mobileScansList so user immediately sees their named scan in the mobile archive
+  const totalMb = (capturedFrames.reduce((acc, f) => acc + (f.blob ? f.blob.size : 0), 0) / (1024 * 1024)).toFixed(1);
+  const newMobEntry = {
+    id: currentScanId,
+    name: currentScanId,
+    count: capturedFrames.length,
+    mb: `${totalMb} MB`,
+    glbUrl: `/models/${currentScanId}.glb`,
+    fallbackGlb: `/models/model.glb`,
+    hasCrack: false,
+    cracksCount: 0,
+    crackType: "Processing / Pending Reconstruction",
+    conf: "99.0%",
+    sector: "All Sectors"
+  };
+  const existingIdx = mobileScansList.findIndex(s => s.id === currentScanId);
+  if (existingIdx >= 0) mobileScansList[existingIdx] = newMobEntry;
+  else mobileScansList.unshift(newMobEntry);
+  renderMobileScansTrack();
 
   haptic('heavy'); playSuccess();
 }
@@ -4555,11 +4656,51 @@ checkNetwork();
 ══════════════════════════════════════════════════════════════ */
 const DEFAULT_MOBILE_SCANS = [
   {
+    id: "survey_20260930150113_",
+    name: "Reinforced Slab Multi-Milestone Survey",
+    count: 70,
+    mb: "21.44 MB",
+    glbUrl: "/models/survey_20260930150113_.glb",
+    fallbackGlb: "/models/model.glb",
+    hasCrack: false,
+    cracksCount: 0,
+    crackType: "None (Nominal Surface)",
+    conf: "51.2%",
+    sector: "All Sectors"
+  },
+  {
+    id: "survey_20260930145709_",
+    name: "Tunnel Lining Spatial Inspection",
+    count: 35,
+    mb: "11.43 MB",
+    glbUrl: "/models/survey_20260930145709_.glb",
+    fallbackGlb: "/models/model.glb",
+    hasCrack: false,
+    cracksCount: 0,
+    crackType: "None (Nominal Surface)",
+    conf: "48.9%",
+    sector: "All Sectors"
+  },
+  {
+    id: "survey_20260930145253_",
+    name: "Bridge Pier Photogrammetry Scan",
+    count: 85,
+    mb: "25.39 MB",
+    glbUrl: "/models/survey_20260930145253_.glb",
+    fallbackGlb: "/models/model.glb",
+    hasCrack: false,
+    cracksCount: 0,
+    crackType: "None (Nominal Surface)",
+    conf: "54.6%",
+    sector: "All Sectors"
+  },
+  {
     id: "survey_structural_crack_demo",
+    name: "Structural Crack Benchmark Demo",
     count: 36,
     mb: "3.47 MB",
-    glbUrl: "/models/model.glb",
-    fallbackGlb: "/scans-files/survey_structural_crack_demo/model.glb",
+    glbUrl: "/models/survey_structural_crack_demo.glb",
+    fallbackGlb: "/models/model.glb",
     hasCrack: true,
     cracksCount: 4,
     crackType: "Shear & Longitudinal Crack (Critical)",
@@ -4567,27 +4708,29 @@ const DEFAULT_MOBILE_SCANS = [
     sector: "Front-Left Sector"
   },
   {
-    id: "survey_20260929172842_",
-    count: 60,
-    mb: "2.4 MB",
-    glbUrl: "/models/survey_20260929172842_.glb",
-    fallbackGlb: "/models/model.glb",
-    hasCrack: false,
-    cracksCount: 0,
-    crackType: "None (Nominal Surface)",
-    conf: "52.1%",
-    sector: "All Sectors"
-  },
-  {
     id: "survey_20260929173305_",
-    count: 44,
-    mb: "2.38 MB",
+    name: "Structural Foundation Survey",
+    count: 64,
+    mb: "6.59 MB",
     glbUrl: "/models/survey_20260929173305_.glb",
     fallbackGlb: "/models/model.glb",
     hasCrack: false,
     cracksCount: 0,
     crackType: "None (Nominal Surface)",
     conf: "50.8%",
+    sector: "All Sectors"
+  },
+  {
+    id: "survey_20260929172842_",
+    name: "Concrete Column 360 Survey",
+    count: 60,
+    mb: "5.48 MB",
+    glbUrl: "/models/survey_20260929172842_.glb",
+    fallbackGlb: "/models/model.glb",
+    hasCrack: false,
+    cracksCount: 0,
+    crackType: "None (Nominal Surface)",
+    conf: "52.1%",
     sector: "All Sectors"
   }
 ];

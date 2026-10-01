@@ -2048,6 +2048,7 @@ model-viewer {
         </div>
         <div class="history-btn-row">
           <button class="history-action-btn" onclick="selectScanInStudio('survey_structural_crack_demo', '/scans-files/survey_structural_crack_demo/model.glb')">VIEW IN 3D</button>
+          <button class="history-action-btn" style="background:rgba(2,132,199,0.10);color:var(--accent-cyan);border-color:rgba(2,132,199,0.35);" onclick="promptRenameScan('survey_structural_crack_demo')">✏️ RENAME</button>
           <button class="history-action-btn" style="background:#f1f5f9;color:var(--text-primary);border-color:#cbd5e1;" onclick="openKeyModal('survey_structural_crack_demo')">RE-GENERATE</button>
         </div>
       </div>
@@ -2446,6 +2447,58 @@ model-viewer {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
       </button>
       <button class="btn-secondary" style="padding:10px 18px;" onclick="closeKeyModal()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     RENAME SURVEY FOLDER MODAL
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="renameModal" onclick="closeRenameModalOnBackdrop(event)">
+  <div class="modal-glass-container" id="renameModalCard" style="max-width:520px;">
+    <button class="modal-close-btn" onclick="closeRenameModal()" title="Close">✕</button>
+
+    <div class="modal-header-block">
+      <div class="modal-eyebrow" style="color:var(--accent-cyan);display:flex;align-items:center;gap:6px;">
+        <span>📁</span> PROJECT & FOLDER MANAGEMENT
+      </div>
+      <h3 class="modal-title">Rename Survey Folder</h3>
+      <p class="modal-desc">
+        Change this survey's identifier and local directory to a clean, professional engineering name. Photos, YOLO detections, and 3D GLB twin will be automatically linked.
+      </p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Current Name</label>
+        <input type="text" class="modal-input-field" id="currentRenameScanId" readonly style="opacity:0.75;background:#f1f5f9;cursor:not-allowed;font-family:var(--font-mono);font-size:12px;" />
+      </div>
+
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">New Professional Name</label>
+        <input type="text" class="modal-input-field" id="newRenameScanId" placeholder="e.g. Bridge_Pier_North_Inspection" autocomplete="off" autofocus onkeydown="if(event.key==='Enter') submitRenameScan()" style="font-family:var(--font-mono);font-size:13px;border-color:var(--accent-cyan);" />
+        <div class="modal-status-msg" id="renameStatusMsg" style="margin-top:8px;"></div>
+      </div>
+
+      <!-- Quick Presets -->
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Quick Engineering Presets</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <button type="button" class="history-action-btn" style="font-size:11px;padding:4px 10px;" onclick="applyRenamePreset('Bridge_Pier_North')">Bridge_Pier_North</button>
+          <button type="button" class="history-action-btn" style="font-size:11px;padding:4px 10px;" onclick="applyRenamePreset('Concrete_Wall_Sector_A')">Concrete_Wall_Sector_A</button>
+          <button type="button" class="history-action-btn" style="font-size:11px;padding:4px 10px;" onclick="applyRenamePreset('Highway_Pavement_Crack')">Highway_Pavement_Crack</button>
+          <button type="button" class="history-action-btn" style="font-size:11px;padding:4px 10px;" onclick="applyRenamePreset('Foundation_Beam_Survey')">Foundation_Beam_Survey</button>
+          <button type="button" class="history-action-btn" style="font-size:11px;padding:4px 10px;" onclick="applyRenamePreset('Building_Facade_Inspection')">Building_Facade_Inspection</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-action-row" style="margin-top:16px;">
+      <button class="btn-primary" id="renameSubmitBtn" style="flex:1;justify-content:center;" onclick="submitRenameScan()">
+        <span>SAVE & RENAME FOLDER</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </button>
+      <button class="btn-secondary" style="padding:10px 18px;" onclick="closeRenameModal()">CANCEL</button>
     </div>
   </div>
 </div>
@@ -3134,6 +3187,127 @@ async function checkReconstructionStatus(scanId) {
    ══════════════════════════════════════════════════════════════════ */
 window._cachedScans = [];
 
+let scanToRename = null;
+
+function promptRenameScan(scanId) {
+  scanToRename = scanId;
+  const curInput = document.getElementById('currentRenameScanId');
+  const newInput = document.getElementById('newRenameScanId');
+  const statusMsg = document.getElementById('renameStatusMsg');
+  if (curInput) curInput.value = scanId;
+  if (newInput) {
+    newInput.value = scanId;
+    setTimeout(() => { newInput.focus(); newInput.select(); }, 100);
+  }
+  if (statusMsg) {
+    statusMsg.textContent = '';
+    statusMsg.className = 'modal-status-msg';
+  }
+  const modal = document.getElementById('renameModal');
+  if (modal) {
+    modal.classList.add('open');
+    modal.style.display = 'flex';
+  }
+}
+
+function closeRenameModal() {
+  const modal = document.getElementById('renameModal');
+  if (modal) {
+    modal.classList.remove('open');
+    modal.style.display = 'none';
+  }
+  scanToRename = null;
+}
+
+function closeRenameModalOnBackdrop(e) {
+  if (e.target && e.target.id === 'renameModal') closeRenameModal();
+}
+
+function applyRenamePreset(presetName) {
+  const input = document.getElementById('newRenameScanId');
+  if (input) {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const timeSuffix = `${pad(now.getHours())}${pad(now.getMinutes())}`;
+    input.value = `${presetName}_${timeSuffix}`;
+    input.focus();
+  }
+}
+
+async function submitRenameScan() {
+  if (!scanToRename) return;
+  const newInput = document.getElementById('newRenameScanId');
+  const statusMsg = document.getElementById('renameStatusMsg');
+  const submitBtn = document.getElementById('renameSubmitBtn');
+  const rawName = (newInput ? newInput.value : '').trim();
+
+  if (!rawName) {
+    if (statusMsg) {
+      statusMsg.textContent = 'Please enter a valid folder name';
+      statusMsg.className = 'modal-status-msg err';
+    }
+    return;
+  }
+
+  // Sanitize
+  const sanitized = rawName.replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').slice(0, 60);
+  if (!sanitized) {
+    if (statusMsg) {
+      statusMsg.textContent = 'Name contains invalid characters. Use letters, numbers, and underscores.';
+      statusMsg.className = 'modal-status-msg err';
+    }
+    return;
+  }
+
+  if (sanitized === scanToRename) {
+    closeRenameModal();
+    return;
+  }
+
+  if (statusMsg) {
+    statusMsg.textContent = 'Renaming survey folder and updating assets...';
+    statusMsg.className = 'modal-status-msg';
+  }
+  if (submitBtn) submitBtn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/scans/${encodeURIComponent(scanToRename)}/rename`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newScanId: sanitized, newName: sanitized })
+    });
+    const result = await res.json();
+    if (!res.ok || !(result.ok || result.success)) {
+      throw new Error(result.error || `Server responded with ${res.status}`);
+    }
+
+    if (statusMsg) {
+      statusMsg.textContent = `✓ Successfully renamed to "${sanitized}"!`;
+      statusMsg.className = 'modal-status-msg ok';
+    }
+
+    // If active scan was renamed, update tracking
+    if (currentActiveScanId === scanToRename) {
+      currentActiveScanId = sanitized;
+      localStorage.setItem('active_scan_id', sanitized);
+      const tag = document.getElementById('activeAssetTag');
+      if (tag) tag.textContent = sanitized;
+    }
+
+    setTimeout(() => {
+      closeRenameModal();
+      loadScanHistory();
+    }, 600);
+  } catch(err) {
+    if (statusMsg) {
+      statusMsg.textContent = `Rename failed: ${err.message}`;
+      statusMsg.className = 'modal-status-msg err';
+    }
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
 async function deleteScanItem(scanId) {
   if (!confirm(`Are you sure you want to permanently delete scan "${scanId}" and all its photos?`)) return;
   try {
@@ -3199,6 +3373,7 @@ async function loadScanHistory() {
             ` : `
               <button class="history-action-btn" onclick="event.stopPropagation(); openKeyModal('${s.id}')">✨ MAKE TWIN</button>
             `}
+            <button class="history-action-btn" style="background:rgba(2,132,199,0.10);color:var(--accent-cyan);border-color:rgba(2,132,199,0.35);" onclick="event.stopPropagation(); promptRenameScan('${s.id}')" title="Rename survey folder">✏️ RENAME</button>
             <button class="history-action-btn" style="background:var(--bg-subtle);color:var(--text-primary);border-color:var(--glass-border-subtle);" onclick="event.stopPropagation(); openKeyModal('${s.id}')">RE-GENERATE</button>
             <button class="history-action-btn" style="background:rgba(239,68,68,0.12);color:#ef4444;border-color:rgba(239,68,68,0.25);" onclick="event.stopPropagation(); deleteScanItem('${s.id}')" title="Delete scan and all photos">🗑</button>
           </div>
